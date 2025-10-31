@@ -1,350 +1,278 @@
-<!doctype html>
-<html lang="ar">
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" />
-<title>قلب صفحة بصورة كاملة</title>
-<style>
-  :root {
-    --bg:#0b0b0b;
-    --page-w:100vw;
-    --page-h:100vh;
-  }
-  html,body{
-    height:100%;
-    margin:0;
-    background:var(--bg);
-    overflow:hidden; /* يمنع التمرير */
-    -webkit-user-select:none;
-    user-select:none;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: none; /* يمنع السلوك الافتراضي لللمس (التمرير) */
-    direction: rtl;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>منيو المطعم - كتاب الورق</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  /* حاوية الكتاب */
-  .book {
-    width:var(--page-w);
-    height:var(--page-h);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    perspective:1800px; /* عمق 3D */
-  }
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Tajawal', sans-serif;
+      perspective: 2000px;
+    }
 
-  /* الورقة (صفحة واحدة) */
-  .page {
-    width:var(--page-w);
-    height:var(--page-h);
-    position:relative;
-    transform-style:preserve-3d;
-    transition: transform 700ms cubic-bezier(.2,.9,.3,1);
-    will-change: transform;
-    transform-origin: left center; /* سنغيّره ديناميكياً تبعاً لليمين/اليسار */
-    cursor:grab;
-    -webkit-user-drag:none;
-  }
-  .page:active { cursor:grabbing; }
+    .book {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      transform-style: preserve-3d;
+      margin: 0 auto;
+    }
 
-  /* وجها الورقة - أمامي وخلفي */
-  .face {
-    position:absolute;
-    inset:0;
-    backface-visibility:hidden;
-    -webkit-backface-visibility:hidden;
-    overflow:hidden;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
+    .page {
+      position: absolute;
+      width: 50vw;
+      height: 100vh;
+      background: #fff;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      transform-style: preserve-3d;
+      transition: transform 1.5s cubic-bezier(0.645, 0.045, 0.355, 1);
+      backface-visibility: hidden;
+      overflow: hidden;
+    }
 
-  .face img{
-    max-width:100%;
-    max-height:100%;
-    object-fit:contain; /* يُظهر الصورة بالكامل بدون اقتطاع */
-    display:block;
-    pointer-events:none;
-    user-drag:none;
-    user-select:none;
-  }
+    .page .front, .page .back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      text-align: center;
+      padding: 50px;
+    }
 
-  /* الوجه الخلفي مع دوران 180 */
-  .back {
-    transform:rotateY(180deg);
-  }
+    .page .back {
+      transform: rotateY(180deg);
+    }
 
-  /* ظل وانحناءة لجعل التأثير واقعي */
-  .page::after {
-    content:'';
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    background:linear-gradient(90deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 30% );
-    mix-blend-mode:multiply;
-    opacity:0.0;
-    transition:opacity 200ms;
-  }
+    /* صفحة الغلاف */
+    #page0 {
+      left: 50%;
+      background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+      background-size: cover;
+      z-index: 100;
+    }
 
-  /* ظل جانبي متغير أثناء التقليب */
-  .page-shadow {
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    z-index:20;
-    background: radial-gradient(1200px 300px at 50% 50%,
-      rgba(0,0,0,0.5), rgba(0,0,0,0) 40%);
-    opacity:0;
-    transition:opacity 200ms;
-    transform:translateZ(-1px);
-  }
+    /* باقي الصفحات */
+    .page:nth-child(2) { z-index: 99; }
+    .page:nth-child(3) { z-index: 98; }
+    .page:nth-child(4) { z-index: 97; }
+    .page:nth-child(5) { z-index: 96; }
 
-  /* تعليمات صغيرة في الأعلى (اختياري) */
-  .hint {
-    position:fixed;
-    left:16px;
-    top:12px;
-    color:#ddd;
-    font-family:system-ui, "Segoe UI", Roboto, "Noto Sans Arabic", Arial;
-    z-index:999;
-    background:rgba(0,0,0,0.3);
-    padding:6px 10px;
-    border-radius:8px;
-    font-size:13px;
-  }
+    .flipped {
+      transform: rotateY(-180deg) !important;
+      z-index: 100 !important;
+    }
 
-  /* استجابة للشاشات الصغيرة */
-  @media (max-width:600px){
-    .hint { font-size:12px; padding:5px 8px; }
-  }
-</style>
+    .content {
+      background: rgba(0,0,0,0.5);
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 80%;
+      backdrop-filter: blur(5px);
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+    }
+
+    h2 {
+      font-size: 2.5rem;
+      margin: 30px 0 15px;
+      color: #ffd700;
+    }
+
+    p {
+      font-size: 1.3rem;
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+
+    .price {
+      font-weight: bold;
+      color: #ffd700;
+      font-size: 1.5rem;
+    }
+
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: none;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      font-size: 2rem;
+      cursor: pointer;
+      z-index: 200;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: all 0.3s;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255,255,255,0.4);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    #prev-btn { left: 20px; }
+    #next-btn { right: 20px; }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 2.5rem; }
+      h2 { font-size: 1.8rem; }
+      p { font-size: 1.1rem; }
+      .content { padding: 20px; }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="hint">اضغط أو اسحب من اليمين/اليسار لقلب الصفحة</div>
+  <div class="book" id="book">
+    <!-- صفحة الغلاف -->
+    <div class="page" id="page0">
+      <div class="front">
+        <div class="content">
+          <h1>مطعم النخبة</h1>
+          <p>تجربة طعام لا تُنسى</p>
+        </div>
+      </div>
+      <div class="back"></div>
+    </div>
 
-<div class="book" id="book" aria-hidden="false">
-  <div class="page" id="page"
-       data-img-src="your-image.jpg"  <!-- ضع اسم/مسار صورتك هنا -->
-       data-flipped="false"
-       >
-    <div class="face front">
-      <img id="img-front" src="" alt="صورة الصفحة الأمامية">
+    <!-- صفحة 1 (المقبلات) -->
+    <div class="page" id="page1">
+      <div class="front" style="background-image: url('https://images.unsplash.com/photo-1546833999-b9f581a748ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
+        <div class="content">
+          <h2>المقبلات</h2>
+          <p>حمص بالطحينة <span class="price">15 ر.س</span></p>
+          <p>متبل <span class="price">14 ر.س</span></p>
+          <p>ورق عنب <span class="price">18 ر.س</span></p>
+          <p>فتوش <span class="price">16 ر.س</span></p>
+        </div>
+      </div>
+      <div class="back"></div>
     </div>
-    <div class="face back">
-      <img id="img-back" src="" alt="صورة الصفحة الخلفية">
+
+    <!-- صفحة 2 (الأطباق الرئيسية) -->
+    <div class="page" id="page2">
+      <div class="front" style="background-image: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
+        <div class="content">
+          <h2>الأطباق الرئيسية</h2>
+          <p>كباب مشوي <span class="price">45 ر.س</span></p>
+          <p>مندي لحم <span class="price">55 ر.س</span></p>
+          <p>سمك مشوي بالأعشاب <span class="price">60 ر.س</span></p>
+          <p>بيتزا مارغريتا <span class="price">38 ر.س</span></p>
+        </div>
+      </div>
+      <div class="back"></div>
     </div>
-    <div class="page-shadow" id="pageShadow"></div>
+
+    <!-- صفحة 3 (الحلويات) -->
+    <div class="page" id="page3">
+      <div class="front" style="background-image: url('https://images.unsplash.com/photo-1563805042-7684c7f05791?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
+        <div class="content">
+          <h2>الحلويات</h2>
+          <p>كنافة بالجبن <span class="price">25 ر.س</span></p>
+          <p>أم علي <span class="price">22 ر.س</span></p>
+          <p>تشيز كيك <span class="price">28 ر.س</span></p>
+          <p>آيس كريم فانيليا <span class="price">18 ر.س</span></p>
+        </div>
+      </div>
+      <div class="back"></div>
+    </div>
+
+    <!-- صفحة 4 (المشروبات) -->
+    <div class="page" id="page4">
+      <div class="front" style="background-image: url('https://images.unsplash.com/photo-1551024709-8f23befc6f87?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
+        <div class="content7">
+          <h2>المشروبات</h2>
+          <p>قهوة عربية <span class="price">12 ر.س</span></p>
+          <p>شاي بالنعناع <span class="price">10 ر.س</span></p>
+          <p>عصير برتقال طازج <span class="price">15 ر.س</span></p>
+          <p>موهيتو <span class="price">20 ر.س</span></p>
+        </div>
+      </div>
+      <div class="back" style="background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80'); background-size: cover;">
+        <div class="content">
+          <h1>شكرًا لزيارتكم</h1>
+          <p>نراكم قريبًا!</p>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
-<script>
-/*
-  ملاحظات التصميم:
-  - الصورة تُعرض على الوجهين (أو يمكنك وضع وجه خلفي مختلف بتغيير src).
-  - object-fit: contain يظهر الصورة كاملة (بدون اقتطاع) مع ترك مسافات جانبية/علوية بحسب نسبة الأبعاد.
-  - التأثير يعمل بالماوس ولمس الشاشة (Pointer events).
-*/
+  <button class="nav-btn" id="prev-btn">❮</button>
+  <button class="nav-btn" id="next-btn">❯</button>
 
-(function(){
-  const page = document.getElementById('page');
-  const frontImg = document.getElementById('img-front');
-  const backImg  = document.getElementById('img-back');
-  const shadow   = document.getElementById('pageShadow');
-  const book = document.getElementById('book');
+  <script>
+    const book = document.getElementById('book');
+    const pages = document.querySelectorAll('.page');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    let currentPage = 0;
+    const totalPages = pages.length;
 
-  // استخدم الصورة المعنونة في الـ HTML أو ضع هنا رابط افتراضي
-  const src = page.dataset.imgSrc || 'your-image.jpg';
-  frontImg.src = src;
-  backImg.src  = src; // نفس الصورة على الظهر. غيّر لو تريد أخرى.
-
-  let dragging = false;
-  let startX = 0;
-  let currentX = 0;
-  let width = window.innerWidth;
-  let origin = 'left'; // نقطة الأصل الافتراضية
-  let direction = 'leftToRight'; // اتجاه الافتراضي عند السحب
-  let flipped = (page.dataset.flipped === 'true');
-
-  // تهيئة نقطة الأصل بحسب الحالة
-  function setTransformOriginForFlip(dir){
-    if(dir === 'leftToRight'){ // قلب إلى اليمين — الأصل من اليسار
-      page.style.transformOrigin = 'left center';
-      origin = 'left';
-    } else { // قلب إلى اليسار — الأصل من اليمين
-      page.style.transformOrigin = 'right center';
-      origin = 'right';
+    function goToPage(pageNum) {
+      pages.forEach((page, index) => {
+        if (index <= pageNum) {
+          page.classList.add('flipped');
+          page.style.zIndex = totalPages - index;
+        } else {
+          page.classList.remove('flipped');
+          page.style.zIndex = index;
+        }
+      });
+      currentPage = pageNum;
     }
-  }
-  setTransformOriginForFlip('leftToRight');
 
-  // وظيفة لتعيين زاوية الدوران (deg بين 0 و 180 أو 0 و -180)
-  function setRotation(deg){
-    page.style.transform = `rotateY(${deg}deg)`;
-    // ظل يعتمد على مدى التقليب
-    const abs = Math.min(1, Math.abs(deg) / 90); // 0..1
-    page.style.setProperty('--flip-progress', abs);
-    shadow.style.opacity = Math.min(0.9, 0.2 + abs * 0.7);
-    // تغيير تدرج الظل الداخلي للواقعية
-    page.style.setProperty('--after-opacity', Math.min(0.6, abs * 0.9));
-    page.style.setProperty('--deg', deg + 'deg');
-    page.querySelector('::after');
-    // أثناء دوران أكبر من 90، نرفع z-index لتجنب اختفاء
-    if(Math.abs(deg) > 90){
-      page.style.zIndex = 5;
-    } else {
-      page.style.zIndex = 1;
-    }
-  }
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < totalPages - 1) {
+        goToPage(currentPage + 1);
+      }
+    });
 
-  // نهاية التقليب: نقرر إذا نكمل إلى 0 أو 180
-  function endDrag(){
-    if(!dragging) return;
-    dragging = false;
-    page.style.transition = 'transform 500ms cubic-bezier(.2,.9,.3,1)';
-    shadow.style.transition = 'opacity 300ms';
-    const dx = currentX - startX;
-    const threshold = width * 0.15; // نسبة لاتخاذ القرار
-    // حساب زاوية حالية
-    let percent = Math.max(-1, Math.min(1, dx / width));
-    let deg = percent * 180;
-    // إذا الأصل من اليمين نعكس الحساب
-    if(origin === 'right') deg = -deg;
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 0) {
+        goToPage(currentPage - 1);
+      }
+    });
 
-    // قرار الإكمال أو العودة
-    if(Math.abs(dx) > threshold){
-      // إكمال التقليب إلى الجهة المكتملة
-      const finishDeg = (deg > 0) ? 180 : -180;
-      setRotation(finishDeg);
-      flipped = true;
-      page.dataset.flipped = 'true';
-      // بعد الانتهاء نضع زاوية 180 (ثابت)
-      setTimeout(()=> {
-        // ضابط لزوايا > 180 إلى 180 بالضبط
-        setRotation(finishDeg);
-        page.style.transition = '';
-        shadow.style.transition = '';
-      }, 520);
-    } else {
-      // العودة للوضع الأصلي (0)
-      setRotation(0);
-      flipped = false;
-      page.dataset.flipped = 'false';
-      setTimeout(()=> {
-        page.style.transition = '';
-        shadow.style.transition = '';
-      }, 520);
-    }
-  }
+    // دعم السحب باللمس (للجوال)
+    let touchStartX = 0;
+    book.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
 
-  // بدء السحب أو اللمس
-  function startDrag(clientX){
-    dragging = true;
-    startX = clientX;
-    currentX = clientX;
-    width = window.innerWidth || document.documentElement.clientWidth;
-    page.style.transition = ''; // تعطيل الانتقال أثناء السحب
-    shadow.style.transition = '';
-  }
-  function moveDrag(clientX){
-    if(!dragging) return;
-    currentX = clientX;
-    const dx = currentX - startX;
-    const percent = Math.max(-1, Math.min(1, dx / width));
-    let deg = percent * 180;
-    // نعكس إذا الأصل من اليمين
-    if(origin === 'right') deg = -deg;
-    // نحد الزاوية
-    if(deg > 180) deg = 180;
-    if(deg < -180) deg = -180;
-    setRotation(deg);
-    // تدريج الظل أثناء السحب
-    shadow.style.opacity = Math.min(0.9, 0.15 + Math.abs(percent)*0.8);
-  }
+    book.addEventListener('touchend', e => {
+      const touchEndX = e.changedTouches[0].screenX;
+      if (touchStartX - touchEndX > 50) {
+        if (currentPage < totalPages - 1) goToPage(currentPage + 1);
+      }
+      if (touchEndX - touchStartX > 50) {
+        if (currentPage > 0) goToPage(currentPage - 1);
+      }
+    });
 
-  // مصفوفة أحداث المؤشر (تعمل على اللمس والماوس)
-  page.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    // تحديد اتجاه قلب الورقة حسب مكان الضغط (يمين/يسار)
-    const x = e.clientX;
-    const mid = window.innerWidth / 2;
-    if(x < mid){
-      // ضغط في النصف الأيمن (لناحية RTL) => قلب من اليمين إلى اليسار
-      setTransformOriginForFlip('rightToLeft');
-    } else {
-      setTransformOriginForFlip('leftToRight');
-    }
-    startDrag(e.clientX);
-    page.setPointerCapture(e.pointerId);
-  });
-
-  page.addEventListener('pointermove', (e) => {
-    if(!dragging) return;
-    moveDrag(e.clientX);
-  });
-
-  page.addEventListener('pointerup', (e) => {
-    if(!dragging) return;
-    page.releasePointerCapture(e.pointerId);
-    endDrag();
-  });
-
-  page.addEventListener('pointercancel', (e) => {
-    if(!dragging) return;
-    page.releasePointerCapture(e.pointerId);
-    endDrag();
-  });
-
-  // دعم النقر البسيط لقلب (بدون سحب) — يشتغل على النقر/اللمسة
-  page.addEventListener('click', (e) => {
-    // إذا كان هناك سحب بسيط جداً لا نعتبره نقرة
-    if(Math.abs(currentX - startX) > 8 && dragging) return;
-    // قلب سريع: نحدد أي اتجاه بناءً على موقع النقر
-    const x = e.clientX;
-    const mid = window.innerWidth / 2;
-    const dir = (x < mid) ? 'rightToLeft' : 'leftToRight';
-    setTransformOriginForFlip(dir);
-    page.style.transition = 'transform 700ms cubic-bezier(.2,.9,.3,1)';
-    shadow.style.transition = 'opacity 350ms';
-    if(!flipped){
-      setRotation(dir === 'leftToRight' ? 180 : -180);
-      flipped = true;
-      page.dataset.flipped = 'true';
-    } else {
-      setRotation(0);
-      flipped = false;
-      page.dataset.flipped = 'false';
-    }
-    // إزالة الـ transition بعد انتهاء الحركة
-    setTimeout(()=> {
-      page.style.transition = '';
-      shadow.style.transition = '';
-    }, 720);
-  });
-
-  // إعادة ضبط عند تغيير حجم النافذة
-  window.addEventListener('resize', () => {
-    width = window.innerWidth;
-    // نعيد ضبط الصورة لتبقى كاملة (object-fit:contain يتعامل مع ذلك تلقائياً)
-  });
-
-  // منع السحب الافتراضي على الهواتف داخل الصفحة (لضمان تجربة قلب سلسة)
-  document.addEventListener('touchmove', function(e){
-    if(dragging) e.preventDefault();
-  }, {passive:false});
-
-  // بداية: عرض الصورة (موجودة في dataset)
-  // يمكنك تعديل src في dataset أو هنا مباشرة
-  // frontImg.src = 'path/to/your-image.jpg';
-
-  // Optional: تحسينات الظلال أثناء المرور بالماوس
-  page.addEventListener('pointerenter', () => {
-    page.style.boxShadow = '0 30px 80px rgba(0,0,0,0.6)';
-  });
-  page.addEventListener('pointerleave', () => {
-    if(!dragging) page.style.boxShadow = '';
-  });
-
-})();
-</script>
+    // بدء من الغلاف
+    goToPage(0);
+  </script>
 </body>
 </html>
