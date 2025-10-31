@@ -1,76 +1,141 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>منيو - ورقة واحدة 3D</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>منيو مطعم - ورقة قلب 3D</title>
 
-<!-- مكتبة StPageFlip -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/css/page-flip.css">
-<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+  <!-- مكتبة PageFlip -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/css/page-flip.css">
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
 
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow: hidden;
-    background: #000;
-  }
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      background: #111;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
 
-  #book {
-    width: 100vw;
-    height: 100vh;
-  }
+    #book {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
 
-  .page {
-    width: 100%;
-    height: 100%;
-  }
+    .page {
+      width: 100%;
+      height: 100%;
+      background: white;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
 
-  .page img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* تبقي الصورة كاملة بدون قص */
-    display: block;
-  }
-</style>
+    .page img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .back-side {
+      background: #f0f0f0;
+      color: #333;
+      font-size: 24px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    /* زر الرجوع (اختياري) */
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+    }
+  </style>
 </head>
 <body>
 
-<div id="book">
-  <!-- صفحة واحدة فقط -->
-  <div class="page" data-density="soft">
-    <img src="https://picsum.photos/id/1015/1920/1080" alt="Menu Image">
+  <!-- زر للرجوع (اختياري) -->
+  <button class="back-btn" onclick="flipBack()">↶</button>
+
+  <div id="book">
+    <!-- الوجه الأمامي (المنيو) -->
+    <div class="page" data-density="hard">
+      <img src="https://picsum.photos/id/1015/1200/800" alt="منيو المطعم">
+    </div>
+
+    <!-- الوجه الخلفي (يمكن أن يكون فارغًا أو معلومات إضافية) -->
+    <div class="page back-side" data-density="hard">
+      <div>
+        <h2>شكراً لزيارتكم</h2>
+        <p>مطعم قلب ورق</p>
+        <p>📞 123-456-789</p>
+      </div>
+    </div>
   </div>
-</div>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const pageFlip = new St.PageFlip(document.getElementById("book"), {
-    width: window.innerWidth,
-    height: window.innerHeight,
-    size: "stretch",
-    maxShadowOpacity: 0.6,
-    showCover: false,
-    mobileScrollSupport: false,
-    usePortrait: true,
-    useMouseEvents: true,
-    flippingTime: 1200, // مدة القلب لتبدو واقعية
-  });
+  <script>
+    let pageFlip;
 
-  // تحميل الصفحة
-  pageFlip.loadFromHTML(document.querySelectorAll(".page"));
+    document.addEventListener("DOMContentLoaded", () => {
+      const book = document.getElementById("book");
 
-  // تحديث عند تغيير حجم الشاشة
-  window.addEventListener("resize", () => {
-    pageFlip.update({
-      width: window.innerWidth,
-      height: window.innerHeight,
+      pageFlip = new St.PageFlip(book, {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        size: "stretch",
+        minWidth: 300,
+        minHeight: 400,
+        maxShadowOpacity: 0.6,
+        showCover: true,           // نعم، نريد غلافًا (الورقة الأولى)
+        mobileScrollSupport: false,
+        usePortrait: true,
+        drawShadow: true,
+        flippingTime: 1000,
+        startZIndex: 0,
+        autoSize: true,
+        maxWidth: 1000,
+        maxHeight: 1400
+      });
+
+      // تحميل الصفحات من HTML
+      pageFlip.loadFromHTML(book.querySelectorAll(".page"));
+
+      // تحديث الأبعاد عند تغيير حجم الشاشة
+      window.addEventListener("resize", () => {
+        pageFlip.update({
+          width: window.innerWidth,
+          height: window.innerHeight
+        });
+      });
     });
-  });
-});
-</script>
+
+    // دالة للرجوع (قلب الصفحة للخلف)
+    function flipBack() {
+      if (pageFlip.getPageCount() > 0 && pageFlip.getCurrentPageIndex() > 0) {
+        pageFlip.flipPrev();
+      }
+    }
+
+    // دعم النقر المزدوج أو السحب للقلب
+    document.addEventListener('dblclick', () => {
+      if (pageFlip.getCurrentPageIndex() === 0) {
+        pageFlip.flipNext();
+      }
+    });
+  </script>
 
 </body>
 </html>
