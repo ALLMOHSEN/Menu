@@ -1,124 +1,379 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>منيو مطعم - صفحة واقعية</title>
-
-<!-- مكتبة StPageFlip -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/css/page-flip.css">
-<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
-
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>منيو - قلب صفحة واقعي</title>
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow: hidden;
-    background: #000;
+  :root{
+    --bg: #111;
+  }
+  html,body{
+    height:100%;
+    margin:0;
+    background:var(--bg);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    direction: rtl;
   }
 
-  #book {
-    width: 100vw;
-    height: 100vh;
-    touch-action: none;
+  /* الحاوية ثلاثية الأبعاد */
+  .book {
+    width:100vw;
+    height:100vh;
+    perspective: 2000px; /* عمق المنظور للاحساس 3D */
+    position:relative;
+    touch-action:none; /* منع التمرير الافتراضي على الموبايل */
   }
 
+  /* صفحة مفردة تملأ الشاشة */
   .page {
-    width: 100%;
-    height: 100%;
+    position:absolute;
+    inset:0;
+    transform-style:preserve-3d;
+    backface-visibility:hidden;
+    border-radius:0;
+    overflow:hidden;
+    will-change: transform;
   }
 
+  /* الصورة على الصفحة */
   .page img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    user-select:none;
+    -webkit-user-drag:none;
+    pointer-events:none;
   }
+
+  /* ظل مرن على الصفحة المتحركة (يسار/يمين) */
+  .page .shade {
+    position:absolute;
+    inset:0;
+    background: linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0));
+    opacity:0;
+    pointer-events:none;
+    transition: opacity 120ms linear;
+  }
+
+  /* الخلفية/الصفحة التي تظهر تحت الورقة المتحركة */
+  .page--under {
+    transform: translateZ(-1px) scale(0.999);
+    z-index: 0;
+  }
+
+  /* الصفحة المتحركة فوق */
+  .page--current {
+    z-index: 2;
+  }
+
+  /* وجه خلفي (نستخدم نسخة من الصورة ولكن نديرها 180deg) */
+  .backface {
+    position:absolute;
+    inset:0;
+    transform: rotateY(180deg);
+    backface-visibility: hidden;
+    overflow:hidden;
+  }
+
+  /* إضافة ظل مركزي للواقعية أثناء الحركة */
+  .curl-shadow {
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background: radial-gradient(circle at 60% 50%, rgba(0,0,0,0.28), rgba(0,0,0,0) 35%);
+    opacity:0;
+    transition: opacity 120ms linear, transform 120ms linear;
+    z-index:3;
+  }
+
+  /* نص صغير للتعليم (اختياري) */
+  .hint {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    color: rgba(255,255,255,0.8);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-size: 13px;
+    z-index:10;
+    user-select:none;
+    pointer-events:none;
+  }
+
 </style>
 </head>
 <body>
 
-<div id="book">
-  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1005/1600/900" alt="صفحة 1"></div>
-  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1008/1600/900" alt="صفحة 2"></div>
-  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1015/1600/900" alt="صفحة 3"></div>
+<div class="book" id="book">
+  <div class="hint">اسحب من أي مكان — اسحب لليسار للتالي، لليمين للسابق</div>
+
+  <!-- العناصر ستُملأ ديناميكياً من الجافاسكربت -->
+  <!-- under = الصفحة التي تظهر تحت الصفحة المتحركة -->
+  <div class="page page--under" id="under" aria-hidden="true"></div>
+
+  <!-- current = الصفحة التي تشاهدها وتستطيع سحبها -->
+  <div class="page page--current" id="current">
+    <div class="backface" id="current-back"></div>
+    <div class="shade" id="shade"></div>
+  </div>
+
+  <div class="curl-shadow" id="curl"></div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const flip = new St.PageFlip(document.getElementById("book"), {
-    width: window.innerWidth,
-    height: window.innerHeight,
-    size: "stretch",
-    showCover: false,
-    usePortrait: true,
-    mobileScrollSupport: false,
-    maxShadowOpacity: 0.6,
-    flippingTime: 900, // مدة الانقلاب لجعل الحركة ناعمة
-    swipeDistance: 15  // حساسية السحب
-  });
+/*
+  Simple realistic page flip:
+  - pages: array of image URLs
+  - supports dragging from any point
+  - progress: 0..1 (0 = not flipped, 1 = fully flipped)
+  - left drag => next page (flip left), right drag => prev page
+*/
 
-  flip.loadFromHTML(document.querySelectorAll(".page"));
+const pages = [
+  // ضع هنا روابط صور المنيو بالترتيب (صفحة 1، 2، 3...)
+  "https://picsum.photos/id/1005/1600/900",
+  "https://picsum.photos/id/1008/1600/900",
+  "https://picsum.photos/id/1015/1600/900",
+  "https://picsum.photos/id/1021/1600/900",
+  "https://picsum.photos/id/1032/1600/900"
+];
 
-  // إعداد التقليب من أي مكان على الصفحة
-  let startX = 0;
-  let dragging = false;
+const book = document.getElementById('book');
+const currentEl = document.getElementById('current');
+const underEl = document.getElementById('under');
+const shadeEl = document.getElementById('shade');
+const backEl = document.getElementById('current-back');
+const curlEl = document.getElementById('curl');
 
-  const book = document.getElementById("book");
+let index = 0; // مؤشر الصفحة الحالية في المصفوفة
+let width = window.innerWidth;
+let height = window.innerHeight;
 
-  book.addEventListener("touchstart", (e) => {
-    startX = e.touches[0].clientX;
-    dragging = true;
-  });
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 
-  book.addEventListener("touchend", (e) => {
-    if (!dragging) return;
-    dragging = false;
-    const endX = e.changedTouches[0].clientX;
-    const diff = endX - startX;
+/* إعداد الصور للصفحة الحالية والصفحة تحتها */
+function renderPages(){
+  // صفحة "تحت" هي القادمة إذا سنقلب لليسار، أو السابقة إذا سنقلب لليمين — لكن سنعرض التالية افتراضياً
+  const nextIndex = index + 1 < pages.length ? index + 1 : null;
+  const prevIndex = index - 1 >= 0 ? index - 1 : null;
 
-    // تحديد عتبة الانقلاب الواقعي (نصف العرض تقريباً)
-    const threshold = window.innerWidth * 0.15;
+  // المحتوى الحالي
+  currentEl.innerHTML = '';
+  const imgCur = document.createElement('img'); imgCur.src = pages[index]; imgCur.alt = `صفحة ${index+1}`;
+  currentEl.appendChild(imgCur);
 
-    if (diff < -threshold) {
-      // سحب يسار -> الصفحة التالية
-      flip.flipNext();
-    } else if (diff > threshold) {
-      // سحب يمين -> الصفحة السابقة
-      flip.flipPrev();
+  // الوجه الخلفي لصفحة current (سنظهر فيه صورة الصفحة التالية عند قلب اليسار،
+  // أو صورة الصفحة السابقة عند قلب اليمين) لكن نتركه الآن افتراضياً
+  backEl.innerHTML = '';
+  const imgBack = document.createElement('img');
+
+  // افتراضياً نعطي الوجه الخلفي صورة التالية إن وُجد
+  if(nextIndex !== null){
+    imgBack.src = pages[nextIndex];
+  } else {
+    imgBack.src = pages[index]; // إن لم توجد صفحة تالية، نكرر نفسها
+  }
+  backEl.appendChild(imgBack);
+
+  // الصفحة التي تحت المتحركة (تظهر كخلفية)
+  underEl.innerHTML = '';
+  const imgUnder = document.createElement('img');
+  // بشكل افتراضي نضع التالية، أما إن اردنا الرجوع للوراء ففي وقت السحب نبدلها
+  imgUnder.src = nextIndex !== null ? pages[nextIndex] : pages[index];
+  underEl.appendChild(imgUnder);
+}
+
+/* خصائص السحب */
+let pointerActive = false;
+let startX = 0;
+let currentX = 0;
+let direction = null; // "left" أو "right" أو null
+let progress = 0;     // 0..1
+let animating = false;
+
+function setTransformForProgress(p, dir){
+  // p ∈ [0,1]. dir 'left' means flipping to next (rotateY negative),
+  // dir 'right' means flipping to prev (rotateY positive).
+  // نطابق الزاوية: angle = p * 180deg
+  const angle = p * 180;
+  const sign = (dir === 'left') ? -1 : 1;
+  const rotateY = sign * angle;
+
+  // لتأثير الانحناء، نضيف translateX طفيف يعتمد على p وsign
+  const translateX = sign * (p * (width * 0.15)); // przesunięcie lateral
+  // ونعطي مقياس خفيف على المحور z مع skew ليستمر الإحساس
+  const perspective = 2000;
+  currentEl.style.transform = `translateZ(0px) translateX(${translateX}px) rotateY(${rotateY}deg)`;
+  // ظل الصفحة المتحركة: يزيد مع p
+  shadeEl.style.opacity = clamp(p * 1.2, 0, 0.9);
+
+  // الظل المركزي (curl)
+  curlEl.style.opacity = clamp(p * 1.1, 0, 0.9);
+  curlEl.style.transform = `translateX(${sign * (p * 40)}px) scale(${1 + p*0.02})`;
+
+  // الصفحة تحت يجب ان تظهر على اليمين او اليسار اعتماداً على الاتجاه
+  underEl.style.transform = `scale(${1 - p*0.02}) translateZ(-1px)`;
+}
+
+/* عند بداية السحب: نعيّن underEl إلى الصفحة المناسبة */
+function beginDrag(x){
+  pointerActive = true;
+  startX = x;
+  currentX = x;
+  direction = null;
+  progress = 0;
+  animating = false;
+  // امنع تحريك transitions مؤقتاً
+  currentEl.style.transition = 'none';
+  underEl.style.transition = 'none';
+  curlEl.style.transition = 'none';
+  shadeEl.style.transition = 'none';
+}
+
+/* أثناء السحب */
+function moveDrag(x){
+  if(!pointerActive) return;
+  currentX = x;
+  const dx = currentX - startX;
+  // نحسب نسبة التقدم بناءً على المسافة الأفقية
+  const p = clamp(Math.abs(dx) / (width * 0.5), 0, 1); // الوصول إلى 50% من العرض => p=1
+  progress = p;
+  direction = dx < 0 ? 'left' : 'right';
+
+  // اضبط underEl لتكون السابقة أو التالية اعتماداً على الاتجاه
+  if(direction === 'left'){
+    // نعرض التالية في الخلف
+    const nextIndex = index + 1 < pages.length ? index + 1 : null;
+    if(nextIndex !== null){
+      // ضع صورة التالية في under ووجه back
+      setUnderImage(pages[nextIndex]);
+      setBackImage(pages[nextIndex]);
     } else {
-      // حركة خفيفة: ارجع بسلاسة
-      flip.turnToPage(flip.getCurrentPageIndex());
+      setUnderImage(pages[index]);
+      setBackImage(pages[index]);
     }
-  });
+  } else {
+    // direction right => نعرض السابقة
+    const prevIndex = index - 1 >= 0 ? index - 1 : null;
+    if(prevIndex !== null){
+      setUnderImage(pages[prevIndex]);
+      setBackImage(pages[prevIndex]);
+    } else {
+      setUnderImage(pages[index]);
+      setBackImage(pages[index]);
+    }
+  }
 
-  // دعم الماوس أيضًا
-  book.addEventListener("mousedown", (e) => {
-    startX = e.clientX;
-    dragging = true;
-  });
+  // نطبق التحول المرئي
+  setTransformForProgress(progress, direction);
+}
 
-  book.addEventListener("mouseup", (e) => {
-    if (!dragging) return;
-    dragging = false;
-    const diff = e.clientX - startX;
-    const threshold = window.innerWidth * 0.15;
+/* عند انتهاء السحب */
+function endDrag(){
+  if(!pointerActive) return;
+  pointerActive = false;
 
-    if (diff < -threshold) flip.flipNext();
-    else if (diff > threshold) flip.flipPrev();
-    else flip.turnToPage(flip.getCurrentPageIndex());
-  });
+  // نقرر ما إذا نكمل القلب أم نرجع
+  const commit = progress > 0.5; // إذا تجاوزت المنتصف، نكمل
+  // أوقف الانتقال الفوري، وابدأ انتقال أنيق
+  currentEl.style.transition = 'transform 420ms cubic-bezier(.2,.8,.2,1)';
+  underEl.style.transition = 'transform 420ms cubic-bezier(.2,.8,.2,1)';
+  curlEl.style.transition = 'opacity 420ms linear, transform 420ms cubic-bezier(.2,.8,.2,1)';
+  shadeEl.style.transition = 'opacity 420ms linear';
 
-  // تحديث الحجم عند تدوير الجهاز أو تغيير الحجم
-  window.addEventListener("resize", () => {
-    flip.update({
-      width: window.innerWidth,
-      height: window.innerHeight,
-    });
-  });
+  if(commit){
+    // اكمل القلب حتى النهاية
+    const finish = () => {
+      // بعد انتهاء الانتقال، حدّث الفهرس وحالة العناصر
+      if(direction === 'left' && index + 1 < pages.length){
+        index = index + 1;
+      } else if(direction === 'right' && index - 1 >= 0){
+        index = index - 1;
+      }
+      // إعادة الضبط إلى الحالة الأساسية
+      currentEl.style.transition = 'none';
+      currentEl.style.transform = 'none';
+      underEl.style.transition = 'none';
+      underEl.style.transform = 'none';
+      curlEl.style.opacity = 0;
+      shadeEl.style.opacity = 0;
+      renderPages();
+      animating = false;
+    };
+
+    // نضع التغيير النهائي (زاوية = 180deg)
+    progress = 1;
+    setTransformForProgress(1, direction);
+
+    animating = true;
+    // ننتظر نهاية الانتقال (نستخدم setTimeout متوافق مع مدة الانتقال)
+    setTimeout(finish, 450);
+  } else {
+    // رجوع للوضع الأصلي
+    progress = 0;
+    setTransformForProgress(0, direction);
+
+    // بعد انتهاء الانتقال نعيد إزالة الانتقالات
+    setTimeout(() => {
+      currentEl.style.transition = 'none';
+      underEl.style.transition = 'none';
+      curlEl.style.opacity = 0;
+      shadeEl.style.opacity = 0;
+    }, 450);
+  }
+}
+
+/* وظائف مساعدة لتغيّر الصور في under و back */
+function setUnderImage(src){
+  underEl.innerHTML = '';
+  const img = document.createElement('img'); img.src = src; img.alt='under';
+  underEl.appendChild(img);
+}
+function setBackImage(src){
+  backEl.innerHTML = '';
+  const img = document.createElement('img'); img.src = src; img.alt='back';
+  backEl.appendChild(img);
+}
+
+/* listeners: pointer (يدمج الماوس واللمس) */
+book.addEventListener('pointerdown', (ev) => {
+  ev.preventDefault();
+  beginDrag(ev.clientX);
+  book.setPointerCapture(ev.pointerId);
 });
-</script>
 
+book.addEventListener('pointermove', (ev) => {
+  if(!pointerActive) return;
+  ev.preventDefault();
+  moveDrag(ev.clientX);
+});
+
+book.addEventListener('pointerup', (ev) => {
+  if(pointerActive){
+    endDrag();
+    try { book.releasePointerCapture(ev.pointerId); } catch(e){}
+  }
+});
+
+book.addEventListener('pointercancel', (ev) => {
+  if(pointerActive){
+    endDrag();
+    try { book.releasePointerCapture(ev.pointerId); } catch(e){}
+  }
+});
+
+/* إعادة الضبط عند تغيير حجم الشاشة */
+window.addEventListener('resize', () => {
+  width = window.innerWidth;
+  height = window.innerHeight;
+});
+
+/* تهيئة أولية */
+renderPages();
+
+</script>
 </body>
 </html>
