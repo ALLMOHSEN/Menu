@@ -1,69 +1,105 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>قلب ورق واقعي</title>
-
-<link rel="stylesheet" href="https://unpkg.com/page-flip/dist/page-flip.css">
+<title>3D Page Curl Effect</title>
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background: #000;
-  height: 100%;
-}
-#book {
-  width: 100vw;
-  height: 100vh;
-}
-.page img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border: none;
-}
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    background: #000;
+  }
+  canvas { display: block; }
 </style>
 </head>
 <body>
 
-<div id="book" class="page-flip-book">
-  <div class="page"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80"></div>
-  <div class="page"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=70"></div>
-  <div class="page"><img src="https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=1200&q=80"></div>
-  <div class="page"><img src="https://images.unsplash.com/photo-1478144592103-25e218a04891?auto=format&fit=crop&w=1200&q=80"></div>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.min.js"></script>
 
-<script src="https://unpkg.com/page-flip/dist/page-flip.browser.min.js"></script>
 <script>
-const pageFlip = new St.PageFlip(document.getElementById("book"), {
-  width: window.innerWidth,
-  height: window.innerHeight,
-  size: "stretch",
-  maxShadowOpacity: 0.6,
-  showCover: false,
-  mobileScrollSupport: false,
-  usePortrait: true,
-  flippingTime: 1000,
-  startPage: 0,
-  disableFlipByClick: false,
-});
+let scene, camera, renderer, mesh, frontTexture, backTexture;
+let curl = 0, targetCurl = 0;
+let flipping = false;
 
-// تحميل الصفحات
-document.querySelectorAll(".page").forEach((el) => {
-  pageFlip.loadFromHTML(el);
-});
+init();
+animate();
 
-// التقليب بالضغط يمين/يسار
-document.body.addEventListener("click", (e) => {
-  if (e.clientX > window.innerWidth / 2) {
-    pageFlip.flipNext();
-  } else {
-    pageFlip.flipPrev();
-  }
-});
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
+  camera.position.z = 2;
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  const loader = new THREE.TextureLoader();
+  frontTexture = loader.load("https://images.unsplash.com/photo-1478144592103-25e218a04891?auto=format&fit=crop&w=1600&q=80");
+  backTexture  = loader.load("https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=1600&q=80");
+
+  const geometry = new THREE.PlaneGeometry(2, 1.4, 100, 100);
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      texFront: { value: frontTexture },
+      texBack: { value: backTexture },
+      curl: { value: 0.0 }
+    },
+    vertexShader: `
+      uniform float curl;
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+        float bend = sin(pos.x * 3.1415) * curl;
+        pos.z += bend * 0.5;
+        pos.x += bend * 0.2;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texFront;
+      uniform sampler2D texBack;
+      uniform float curl;
+      varying vec2 vUv;
+      void main() {
+        if (vUv.x < (0.5 + curl)) {
+          gl_FragColor = texture2D(texFront, vUv);
+        } else {
+          gl_FragColor = texture2D(texBack, vec2(1.0 - vUv.x, vUv.y));
+        }
+      }
+    `,
+    side: THREE.DoubleSide
+  });
+
+  mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+
+  window.addEventListener('resize', onWindowResize);
+
+  document.body.addEventListener('click', () => {
+    if (flipping) return;
+    flipping = true;
+    targetCurl = targetCurl === 0 ? 0.5 : 0;
+  });
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  mesh.material.uniforms.curl.value += (targetCurl - mesh.material.uniforms.curl.value) * 0.08;
+  if (Math.abs(mesh.material.uniforms.curl.value - targetCurl) < 0.01) flipping = false;
+  renderer.render(scene, camera);
+}
 </script>
 
 </body>
