@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>منيو مطعم - صفحة واقعية</title>
+
+<!-- مكتبة StPageFlip -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/css/page-flip.css">
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+  }
+
+  #book {
+    width: 100vw;
+    height: 100vh;
+    touch-action: none;
+  }
+
+  .page {
+    width: 100%;
+    height: 100%;
+  }
+
+  .page img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<div id="book">
+  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1005/1600/900" alt="صفحة 1"></div>
+  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1008/1600/900" alt="صفحة 2"></div>
+  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1015/1600/900" alt="صفحة 3"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const flip = new St.PageFlip(document.getElementById("book"), {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    size: "stretch",
+    showCover: false,
+    usePortrait: true,
+    mobileScrollSupport: false,
+    maxShadowOpacity: 0.6,
+    flippingTime: 900, // مدة الانقلاب لجعل الحركة ناعمة
+    swipeDistance: 15  // حساسية السحب
+  });
+
+  flip.loadFromHTML(document.querySelectorAll(".page"));
+
+  // إعداد التقليب من أي مكان على الصفحة
+  let startX = 0;
+  let dragging = false;
+
+  const book = document.getElementById("book");
+
+  book.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+    dragging = true;
+  });
+
+  book.addEventListener("touchend", (e) => {
+    if (!dragging) return;
+    dragging = false;
+    const endX = e.changedTouches[0].clientX;
+    const diff = endX - startX;
+
+    // تحديد عتبة الانقلاب الواقعي (نصف العرض تقريباً)
+    const threshold = window.innerWidth * 0.15;
+
+    if (diff < -threshold) {
+      // سحب يسار -> الصفحة التالية
+      flip.flipNext();
+    } else if (diff > threshold) {
+      // سحب يمين -> الصفحة السابقة
+      flip.flipPrev();
+    } else {
+      // حركة خفيفة: ارجع بسلاسة
+      flip.turnToPage(flip.getCurrentPageIndex());
+    }
+  });
+
+  // دعم الماوس أيضًا
+  book.addEventListener("mousedown", (e) => {
+    startX = e.clientX;
+    dragging = true;
+  });
+
+  book.addEventListener("mouseup", (e) => {
+    if (!dragging) return;
+    dragging = false;
+    const diff = e.clientX - startX;
+    const threshold = window.innerWidth * 0.15;
+
+    if (diff < -threshold) flip.flipNext();
+    else if (diff > threshold) flip.flipPrev();
+    else flip.turnToPage(flip.getCurrentPageIndex());
+  });
+
+  // تحديث الحجم عند تدوير الجهاز أو تغيير الحجم
+  window.addEventListener("resize", () => {
+    flip.update({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+  });
+});
+</script>
+
+</body>
+</html>
