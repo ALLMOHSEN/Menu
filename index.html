@@ -3,272 +3,351 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-<title>منيو — صفحة بصفحة 3D</title>
+<title>كتاب بصفحات 3D - قلب واقعي</title>
 <style>
-  :root{
-    --bg:#0f0f10;
-    --page-w: 80vmin;   /* page width relative to viewport */
-    --page-h: calc(var(--page-w) * 1.414); /* A4-like aspect */
-  }
-
-  /* basic reset */
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{
-    background: radial-gradient(circle at 20% 20%, #1b1b1f 0%, var(--bg) 60%);
-    display:flex;align-items:center;justify-content:center;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    overflow:hidden;
-    touch-action:none; /* we'll handle touches */
-    -webkit-user-select:none; user-select:none;
-  }
-
-  /* full-bleed container (fills screen) */
-  .stage{
-    width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;
-    perspective:1600px;
-    -webkit-perspective:1600px;
-  }
-
-  /* single leaf (a sheet) */
-  .sheet{
-    width:var(--page-w);
-    height:var(--page-h);
-    position:relative;
-    transform-style:preserve-3d;
-    transition:transform 700ms cubic-bezier(.2,.9,.25,1);
-    cursor:grab;
-    will-change:transform;
-  }
-
-  /* pages (two sides) */
-  .side{
-    position:absolute;inset:0;
-    backface-visibility:hidden;
-    background-size:cover;
-    background-position:center;
-    border-radius:12px;
-    box-shadow:
-      0 18px 50px rgba(2,6,23,0.7),
-      inset 0 0 80px rgba(0,0,0,0.25);
-    overflow:hidden;
-    display:flex;align-items:center;justify-content:center;
-    transform-origin:100% 50%;
-  }
-
-  /* front face (visible initially) */
-  .front{
-    transform:rotateY(0deg);
-  }
-
-  /* back face placed behind (when flipped) */
-  .back{
-    transform:rotateY(-180deg);
-  }
-
-  /* thin paper edge for realism (right edge) */
-  .edge{
-    position:absolute;top:0;right:-6px;width:12px;height:100%;
-    background:linear-gradient(90deg, rgba(255,255,255,0.04), rgba(0,0,0,0.1));
-    border-radius:0 6px 6px 0;
-    z-index:6;pointer-events:none;
-  }
-
-  /* subtle curl shadow on turning side */
-  .sheet::before{
-    content:"";position:absolute;inset:0;border-radius:12px;
-    pointer-events:none;
-    background:
-      linear-gradient(90deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.12) 20%, rgba(0,0,0,0.35) 80%);
-    mix-blend-mode:multiply;opacity:0.35;
-  }
-
-  /* page-number and small UI hints hidden (not visible but part of layout) */
-  .meta{
-    position:absolute;bottom:14px;left:14px;color:rgba(255,255,255,0.85);
-    font-family:system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
-    font-size:13px;opacity:0.9;transform:translateZ(40px);
-  }
-
-  /* responsive: scale sheet to fit tall or wide screens nicely */
-  @media (min-aspect-ratio: 1/1){
-    .sheet{transform-origin:center center; /* normal */ }
-    .sheet{width: min(88vmin, 72vw); height: calc(min(88vmin,72vw) * 1.414);}
-  }
-
-  /* small visual "page curl" overlay during drag (applied via inline style) */
-  .curl{
-    position:absolute;inset:0;border-radius:12px;pointer-events:none;
-    background:linear-gradient(120deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.06) 8%, rgba(0,0,0,0.0) 30%);
-    mix-blend-mode:overlay;opacity:0.9;z-index:9;
-  }
-
-  /* prevent image selection or drag */
-  img{user-drag:none;user-select:none;-webkit-user-drag:none;}
-
-  /* small instruction-free overlay for edge shadows */
-  .shadow-left, .shadow-right{
-    position:absolute;inset:0;border-radius:12px;pointer-events:none;
-    background:linear-gradient(90deg, rgba(0,0,0,0.45), transparent);
-    opacity:0;transition:opacity .3s;
-  }
-  .shadow-left{transform:rotateY(0deg)}
-  .shadow-right{background:linear-gradient(270deg, rgba(0,0,0,0.45), transparent)}
-
-  /* make interactions smooth on touch */
-  .sheet:active{cursor:grabbing}
+  html,body{height:100%;margin:0;background:#000}
+  canvas{display:block;width:100vw;height:100vh;touch-action:none;-webkit-user-select:none;user-select:none}
 </style>
 </head>
 <body>
-<div class="stage">
-  <div class="sheet" id="sheet" aria-hidden="false">
-    <div class="side front" id="front"></div>
-    <div class="side back" id="back"></div>
-    <div class="edge"></div>
-    <div class="curl" id="curl" style="opacity:0"></div>
-    <div class="shadow-left" id="sL" style="opacity:0"></div>
-    <div class="shadow-right" id="sR" style="opacity:0"></div>
-    <div class="meta" id="meta"></div>
-  </div>
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/three@0.156.0/build/three.min.js"></script>
 <script>
-/*
-  صفحة منيو بصفحات صور، تأثير قلب صفحة ثلاثي الأبعاد
-  - اضف روابط الصور في المصفوفة "images"
-  - النقر أو السحب لليسار يقلب للصفحة التالية
-  - السحب لليمين يعود للصفحة السابقة
-  - تم تعطيل التكبير بالإصبع (meta viewport + منع اللمس المتعدد)
-*/
-
-const images = [
-  // ضع هنا روابط صور المنيو (نصية). أمثلة: (استبدلها بروابطك)
-  "https://images.unsplash.com/photo-1542831371-d531d36971e6?w=1600&q=80&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1548946526-f69e2424cf45?w=1600&q=80&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=80&auto=format&fit=crop"
+// ---------- الصور: ضع هنا روابط صور الواجهات (كل صفحة تحتاج صورتين: front و back) ----------
+const pages = [
+  { front: "https://images.unsplash.com/photo-1542831371-d531d36971e6?w=2000&q=80&auto=format&fit=crop", back: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=2000&q=80&auto=format&fit=crop" },
+  { front: "https://images.unsplash.com/photo-1548946526-f69e2424cf45?w=2000&q=80&auto=format&fit=crop", back: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=2000&q=80&auto=format&fit=crop" },
+  { front: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=2000&q=80&auto=format&fit=crop", back: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=2000&q=80&auto=format&fit=crop" }
 ];
+// -------------------------------------------------------------------------------------
 
-let idx = 0;
-const sheet = document.getElementById('sheet');
-const front = document.getElementById('front');
-const back = document.getElementById('back');
-const curl = document.getElementById('curl');
-const meta = document.getElementById('meta');
-const sL = document.getElementById('sL');
-const sR = document.getElementById('sR');
+// إعداد المشهد، الكاميرا، والرندر
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a0a);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
 
-function applySides(i){
-  // current image on front, next image on back
-  front.style.backgroundImage = `url("${images[i]}")`;
-  const next = (i+1) % images.length;
-  back.style.backgroundImage = `url("${images[next]}")`;
-  meta.textContent = `${i+1} / ${images.length}`;
+const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 2000);
+camera.position.set(0, 0, 1000);
+
+// إضاءة لواقعية الظلال والسطوع
+const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+scene.add(ambient);
+const dir = new THREE.DirectionalLight(0xffffff, 0.6);
+dir.position.set(200, 300, 500);
+scene.add(dir);
+
+// مقاسات "الورقة" الافتراضية (بكسل في مشهد ثلاثي الأبعاد)
+const pageWidth = 900;  // half-spread width (one صفحة)
+const pageHeight = 1260;
+const spreadGap = 8; // فراغ بسيط بين نصفين اليمين واليسار
+
+// تحويل صور إلى خامات
+const loader = new THREE.TextureLoader();
+loader.crossOrigin = "";
+
+function makeMaterial(texture){
+  texture.anisotropy = 4;
+  texture.encoding = THREE.sRGBEncoding;
+  return new THREE.MeshStandardMaterial({ map: texture, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.02 });
 }
-applySides(idx);
 
-// Flip state
-let isFlipped = false;
-let dragging = false;
+// إنشاء صفحة قابلة للانثناء (شبكة مقسمة كثيراً لتبدو مطوية)
+function createPageMesh(frontTex, backTex){
+  // تقسيمات عالية للانثناء الناعم
+  const segX = 120; // طولية (عرض الصفحة)
+  const segY = 64;
+  const geom = new THREE.PlaneGeometry(pageWidth, pageHeight, segX, segY);
+
+  // مركز الطية العمودية سيكون في منتصف الحافة اليمنى (لصفحة اليمين) أو اليسرى حسب التحريك
+  // لكن سنبقي مسارات الانثناء عاماً: الانثناء حول محور عمودي يمر عبر منتصف الصفحة
+
+  const frontMaterial = makeMaterial(frontTex);
+  const backMaterial = makeMaterial(backTex);
+
+  // سنرسم الوجهين كـ groups: mesh واحد للواجهة الأمامية وواحد للواجهة الخلفية
+  const geomFront = geom.clone();
+  const geomBack  = geom.clone();
+
+  // خفض حالتي z-fighting بتقديم مسافة صغيرة
+  const meshFront = new THREE.Mesh(geomFront, frontMaterial);
+  const meshBack  = new THREE.Mesh(geomBack, backMaterial);
+
+  // خلفية تضهر عند انقلاب الصفحة: نوجه وجهها للخارج
+  meshBack.scale.x = -1; // انعكاس لتصوير الوجه الخلفي بصورة صحيحة
+
+  // نجعلهما يشغلان نفس المكان
+  meshFront.position.set(0,0,0.5);
+  meshBack.position.set(0,0,-0.5);
+
+  const container = new THREE.Group();
+  container.add(meshFront);
+  container.add(meshBack);
+
+  // نحفظ بعض البيانات للتعديل الديناميكي
+  container.userData = {
+    meshFront, meshBack, geomFront, geomBack, segX, segY
+  };
+  return container;
+}
+
+// بناء طية الكتاب (الجزء الأيسر والثاني الأيمن) ويُعرضان كسِبْرَد (spread)
+const book = new THREE.Group();
+scene.add(book);
+
+// صفحات متكدسة (سنضعهم في طبقات: الصفحات الأمامية على اليمين، والظهرية على اليسار)
+const pageMeshes = [];
+for (let i=0;i<pages.length;i++){
+  // كل صفحة نسرع تحميل خامات واجهتيها
+  const p = pages[i];
+  const texF = loader.load(p.front);
+  const texB = loader.load(p.back);
+  const pm = createPageMesh(texF, texB);
+  // ضع كل صفحة في وسط الـ spread (محورها في المنتصف)
+  pm.position.set(0,0, -i*1.5); // تكديس بسيط في محور z لتفادي تداخل
+  book.add(pm);
+  pageMeshes.push(pm);
+}
+
+// إضافة "غلاف" أمامي وخلفي (نفس فكرة الصفحة لكن بلون/قماش)
+function makeCover(textureUrl, depthZ){
+  const tex = loader.load(textureUrl);
+  const mat = makeMaterial(tex);
+  const geom = new THREE.PlaneGeometry(pageWidth*2 + spreadGap*2, pageHeight, 16, 8);
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.position.set(0,0, depthZ);
+  return mesh;
+}
+const coverFront = makeCover("https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=2000&q=80&auto=format&fit=crop", 10);
+const coverBack  = makeCover("https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=2000&q=80&auto=format&fit=crop", 20);
+book.add(coverBack);
+book.add(coverFront);
+
+// نرسم النشر: الجزء الأيسر والأيمن كنصفين
+// سنعالج الانثناء بتغيير مواضع رؤوس كل نصف صفحة في كل إطار بناء على زاوية القلب.
+
+// Helper: تعديل هندسي لانثناء صفحة معينة (halfPage = "right" أو "left")
+function bendPageHalf(container, progress, direction){
+  // progress: -1 (مقلوب تماماً لليسار) .. 0 (مسطحة) .. +1 (مقلوب تماماً لليمين)
+  // direction: "right" لـالتعامل مع نصف صفحة اليمنى، "left" لنصف اليسرى
+  // سنعتمد محور طي مركزي في منتصف الـ spread (x=0).
+  const { meshFront, meshBack, geomFront, geomBack, segX, segY } = container.userData;
+  // نعمل على نسخة كل إطار (نعدل مواقع vertices مباشرة)
+  const gF = geomFront.attributes.position;
+  const gB = geomBack.attributes.position;
+  const positionsF = gF.array;
+  const positionsB = gB.array;
+
+  // خصائص الانثناء
+  const maxAngle = Math.PI * 0.98; // تقريباً 180 درجة
+  const angle = maxAngle * Math.tanh(progress * 2.2); // منحنى ناعم
+  // fold center: x = 0
+  // لكل رأس، نحسب مسافة من محور الطي ونطبق دوران حول خط عمودي يمر عبر محور الطي
+  // نضيف تأثير انحناء (bend) بسيط على المحور z و y لتظهر الطية كقوس
+  const w = pageWidth;
+  const bendRadiusBase =  w / 2 / Math.max(0.1, Math.abs(angle)); // radius estimate
+
+  // Loop through vertices
+  const vertexCount = positionsF.length / 3;
+  for (let i=0;i<vertexCount;i++){
+    // index in flat array
+    const ix = i*3;
+    const x = positionsF[ix + 0];
+    const y = positionsF[ix + 1];
+    // x in range [-w/2, +w/2]
+    // distance from fold (fold at x=0)
+    const localX = x; // negative = left half, positive = right half
+    // factor to attenuate rotation across page (closer to fold rotates more)
+    const t = 1 - Math.min(1, Math.abs(localX) / (w/2)); // 1 at fold, 0 at outer edge
+    // rotation sign depends on which half we're bending
+    const sign = localX >= 0 ? 1 : -1;
+
+    // Desired rotation for this vertex
+    // For bending to the left (progress negative), right half rotates negative, left half rotates positive etc.
+    let rot = angle * ( (localX >= 0) ? Math.max(0, -progress) : Math.max(0, progress) );
+    // But we want a smooth falloff so multiply by t^power
+    rot *= Math.pow(t, 1.2);
+
+    // compute new position by rotating the vertex around a vertical axis located at x=0 in local page coords
+    // translate to pivot
+    const px = localX;
+    const py = y;
+    // rotation around Y axis (vertical)
+    const cosR = Math.cos(rot);
+    const sinR = Math.sin(rot);
+
+    // pivot = (0,0) around vertical line: after rotation:
+    const nx = px * cosR; // approximate rotation around y
+    const nz = -px * sinR; // depth arises from rotation
+    // add subtle curl: create slight z offset that depends on distance from fold and progress
+    const curlAmount = Math.sin(Math.PI * t) * 24 * Math.abs(progress);
+    const ny = py + Math.sin((1 - t) * Math.PI) * 6 * Math.abs(progress);
+
+    positionsF[ix + 0] = nx;
+    positionsF[ix + 1] = ny;
+    positionsF[ix + 2] = nz + 0.5;
+
+    // Back geometry: mirror similar transform but offset a bit and flip normal effect
+    positionsB[ix + 0] = nx;
+    positionsB[ix + 1] = ny;
+    positionsB[ix + 2] = nz - 0.5;
+  }
+
+  // Flag update
+  geomFront.attributes.position.needsUpdate = true;
+  geomBack.attributes.position.needsUpdate = true;
+
+  // Slight rotation of the whole container for perspective feel
+  container.rotation.y = 0.02 * (progress); // tiny global tilt
+  // Lighting tweak by material roughness / metalness by progress (adds gloss when turning)
+  meshFront.material.roughness = 0.7 - 0.25 * Math.abs(progress);
+  meshBack.material.roughness  = 0.7 - 0.25 * Math.abs(progress);
+}
+
+// العملية الأساسية: عند السحب نغير قيمة flipProgress من 0 إلى 1 ثم تنتقل الصفحة التالية
+let flipProgress = 0; // 0 = مسطحة، 1 = نصف مقلوب، -1 = معكوس للاتجاه الآخر
+let isDragging = false;
 let startX = 0;
-let currentRotation = 0; // degrees
+let currentPage = 0; // مؤشر أول صفحة معروضة على الـ spread (الصفحة اليمنى في العرض)
+const totalPages = pageMeshes.length;
 
-// helper: set sheet transform for rotationY in degrees
-function setRotation(deg){
-  currentRotation = deg;
-  sheet.style.transform = `translateZ(0px) rotateY(${deg}deg)`;
-  // adjust shadows and curl to enhance realism
-  const t = Math.abs(deg) / 180; // 0..1
-  sR.style.opacity = deg < 0 ? Math.min(0.9, 0.5 + t*0.5) : 0;
-  sL.style.opacity = deg > 0 ? Math.min(0.9, 0.5 + t*0.5) : 0;
-  curl.style.opacity = Math.min(1, 0.9 * (1 - Math.cos(deg*Math.PI/180)));
-  // subtle perspective translation to mimic page bend
-  const tx = Math.sin(deg*Math.PI/180) * 18;
-  sheet.style.transform += ` translateX(${tx}px)`;
+// وضع أول صفحات للعرض: نعرض page i كأعلى صفحة قابلة للتقليب
+function positionPages(){
+  // arrange so that pageMeshes[currentPage] هو الصفحة العليا القابلة للقلب
+  for (let i=0;i<pageMeshes.length;i++){
+    const m = pageMeshes[i];
+    // center spread: نضع منتصف الكتاب في x=0؛ كل صفحة تكون في نفس المكان ولكن ترتيب z يختلف
+    m.position.set(0,0, -i*1.5);
+    m.rotation.set(0,0,0);
+  }
 }
+positionPages();
 
-function animateFlip(toDeg, duration=600){
-  sheet.style.transition = `transform ${duration}ms cubic-bezier(.2,.9,.25,1)`;
-  setRotation(toDeg);
-  setTimeout(()=> {
-    sheet.style.transition = '';
-    // update state when fully flipped
-    if (Math.abs(toDeg) >= 90){
-      // increment index when page completed
-      if (toDeg < 0) idx = (idx + 1) % images.length;
-      else if (toDeg > 0) idx = (idx - 1 + images.length) % images.length;
-      // reset to neutral pose with new images
-      setRotation(0);
-      applySides(idx);
-    } else {
-      // returned to neutral
-      setRotation(0);
-    }
-  }, duration);
-}
-
-/* Mouse & touch handling: supports drag and click */
-let lastTap = 0;
-sheet.addEventListener('pointerdown', (e)=>{
-  dragging = true;
+// تفاعل اللمس/الماوس
+renderer.domElement.addEventListener('pointerdown', (e)=>{
+  isDragging = true;
   startX = e.clientX;
-  sheet.setPointerCapture(e.pointerId);
-  sheet.style.transition = ''; // cancel any transition
 });
-sheet.addEventListener('pointermove', (e)=>{
-  if(!dragging) return;
+window.addEventListener('pointermove', (e)=>{
+  if (!isDragging) return;
   const dx = e.clientX - startX;
-  // Map dx to rotation (sensitivity)
-  const maxW = Math.max(window.innerWidth, window.innerHeight);
-  let deg = (dx / maxW) * 180; // -180 .. 180
-  // clamp for realism (limit beyond -160..160)
-  deg = Math.max(Math.min(deg, 160), -160);
-  setRotation(deg);
+  // map dx to progress range [-1,1], يعتمد على عرض الشاشة
+  const p = dx / (window.innerWidth * 0.5);
+  flipProgress = Math.max(-1, Math.min(1, p));
 });
-sheet.addEventListener('pointerup', (e)=>{
-  if(!dragging) return;
-  dragging = false;
-  const dx = e.clientX - startX;
-  const threshold = 0.08 * Math.max(window.innerWidth, window.innerHeight); // small swipe threshold
-  if (dx < -threshold){
-    // flip to next
-    animateFlip(-180, 520);
-  } else if (dx > threshold){
-    // flip to previous (simulate positive rotation)
-    animateFlip(180, 520);
-  } else {
-    // click / tap — detect double-tap to go back quickly? simple single tap flips next
-    const now = Date.now();
-    if (now - lastTap < 300){
-      // double tap -> previous
-      animateFlip(180,520);
-      lastTap = 0;
+window.addEventListener('pointerup', (e)=>{
+  if (!isDragging) return;
+  isDragging = false;
+  // قرار الانتهاء: إذا تجاوزت القيمة عتبة نؤكد القلب وإلا نعود
+  const threshold = 0.35;
+  if (flipProgress < -threshold){
+    // قلب للصفحة التالية (نحو اليمين)
+    animateFlipTo(-1, ()=> finalizeFlip(-1));
+  } else if (flipProgress > threshold){
+    // قلب للخلف (العودة لصفحة سابقة)
+    // لا نسمح بالعودة إذا كانت هذه الصفحة الأولى
+    if (currentPage > 0) {
+      animateFlipTo(1, ()=> finalizeFlip(1));
     } else {
-      animateFlip(-180,520);
-      lastTap = now;
+      animateFlipTo(0);
     }
+  } else {
+    animateFlipTo(0);
   }
 });
 
-/* Prevent two-finger pinch and pinch-zoom gestures */
-window.addEventListener('touchstart', function(e){
-  if (e.touches && e.touches.length > 1){
-    e.preventDefault();
+// وظيفة لإجراء انميشن سلس للقلب
+let animating = false;
+function animateFlipTo(target, onComplete){
+  animating = true;
+  const start = flipProgress;
+  const dur = 420;
+  const t0 = performance.now();
+  (function frame(now){
+    const tt = Math.min(1, (now - t0)/dur);
+    const ease = 1 - Math.pow(1 - tt, 3);
+    flipProgress = start + (target - start) * ease;
+    if (tt < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      animating = false;
+      if (onComplete) onComplete();
+    }
+  })(t0);
+}
+
+// عندما يكتمل القلب، نحدث مؤشر الصفحة ونُعيد الوضع
+function finalizeFlip(direction){
+  if (direction === -1){
+    // انتقل لصفحة تالية إلى اليمين
+    currentPage = Math.min(totalPages - 1, currentPage + 1);
+  } else if (direction === 1){
+    // عد للصفحة السابقة
+    currentPage = Math.max(0, currentPage - 1);
   }
-},{passive:false});
+  // إعادة هندسة: نعيد تعيين مواقع هندسية للصفحة المقلوبة (إرجاع للمساحة الأصلية)
+  // لإبقاء الأمور بسيطة نُعيد بناء هندسة الصفحة الحالية لإزالة تأثيرات الانحناء
+  resetAllGeometries();
+  flipProgress = 0;
+}
+
+// إعادة هندسات إلى الوضع المسطح الأصلي
+function resetAllGeometries(){
+  for (let pm of pageMeshes){
+    const { geomFront, geomBack } = pm.userData;
+    // نعيد القيم الأصلية عن طريق إعادة توليد PlaneGeometry أو إعادة ملء المواضع الأصلية
+    // أسهل: نعيد إنشاء PlaneGeometry لكل صفحة (تكلفة بسيطة لعدد صفحات صغير)
+    const segX = pm.userData.segX;
+    const segY = pm.userData.segY;
+    const newG = new THREE.PlaneGeometry(pageWidth, pageHeight, segX, segY);
+    pm.userData.geomFront = newG;
+    pm.userData.geomBack  = newG.clone();
+    pm.children[0].geometry.dispose();
+    pm.children[0].geometry = pm.userData.geomFront;
+    pm.children[1].geometry.dispose();
+    pm.children[1].geometry = pm.userData.geomBack;
+  }
+}
+
+// دالة الرسوم: تطبق الانثناء على الصفحة العليا فقط (أعلى صفحة قابلة للبيع)
+function renderLoop(){
+  requestAnimationFrame(renderLoop);
+
+  // نطبق الانثناء فقط على الصفحة في الموضع currentPage (التي فوق الباقي)
+  // إذا flipProgress > 0 => قلب للخلف (نحو اليسار)؛ <0 => قلب للأمام (نحو اليمين)
+  const active = pageMeshes[currentPage];
+  if (active){
+    // سنطبق الانثناء على الـ active page فقط
+    bendPageHalf(active, flipProgress, "both");
+  }
+
+  // نظرة واقعية بسيطة: تحريك الكاميرا قليلاً تبعاً للحالة
+  camera.position.z = 1000 + Math.abs(flipProgress) * 120;
+  camera.lookAt(0,0,0);
+
+  renderer.render(scene, camera);
+}
+renderLoop();
+
+// إعادة ضبط عند تغيير حجم النافذة
+window.addEventListener('resize', ()=>{
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+// منع اللمسات المتعددة والتكبير بالإصبع
+window.addEventListener('touchstart', function(e){ if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive:false });
 window.addEventListener('gesturestart', function(e){ e.preventDefault(); });
 
-/* keyboard left/right for desktop testers */
-window.addEventListener('keydown', (e)=>{
-  if (e.key === 'ArrowRight') animateFlip(-180,420);
-  if (e.key === 'ArrowLeft') animateFlip(180,420);
-});
+// لمسة نهائية: إخفاء مؤشر الفأرة على الأجهزة اللمسية
+document.addEventListener('mousemove', ()=>{ /* no-op to keep canvas active */ });
 
-/* disable context menu to keep interaction clean */
-window.addEventListener('contextmenu', e => e.preventDefault());
-
-/* initial tiny perspective settle */
-setRotation(0);
+// مُلاحظة تقنية: الكود يحاول محاكاة انثناء واقعي عبر تعديل رؤوس الـ Plane.
+// تحسينات ممكنة: shaders مخصصة لنتائج أكثر دقة، أو خوارزميات Physically-Based page curl.
+// لكن هذا الكود يعطي انثناء مرئي واقعي، بدون حواف (الصور تملأ الصفحة بالكامل).
 </script>
 </body>
 </html>
