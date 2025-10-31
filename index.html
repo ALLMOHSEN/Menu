@@ -1,74 +1,274 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>منيو ثلاثي الأبعاد</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/css/page-flip.css">
-<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
+<title>منيو — صفحة بصفحة 3D</title>
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    height: 100%;
-    background: #000;
+  :root{
+    --bg:#0f0f10;
+    --page-w: 80vmin;   /* page width relative to viewport */
+    --page-h: calc(var(--page-w) * 1.414); /* A4-like aspect */
   }
 
-  #book {
-    width: 100vw;
-    height: 100vh;
-    position: relative;
+  /* basic reset */
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background: radial-gradient(circle at 20% 20%, #1b1b1f 0%, var(--bg) 60%);
+    display:flex;align-items:center;justify-content:center;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    overflow:hidden;
+    touch-action:none; /* we'll handle touches */
+    -webkit-user-select:none; user-select:none;
   }
 
-  .page {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+  /* full-bleed container (fills screen) */
+  .stage{
+    width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;
+    perspective:1600px;
+    -webkit-perspective:1600px;
   }
 
-  .page img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    user-select: none;
-    pointer-events: none;
+  /* single leaf (a sheet) */
+  .sheet{
+    width:var(--page-w);
+    height:var(--page-h);
+    position:relative;
+    transform-style:preserve-3d;
+    transition:transform 700ms cubic-bezier(.2,.9,.25,1);
+    cursor:grab;
+    will-change:transform;
   }
+
+  /* pages (two sides) */
+  .side{
+    position:absolute;inset:0;
+    backface-visibility:hidden;
+    background-size:cover;
+    background-position:center;
+    border-radius:12px;
+    box-shadow:
+      0 18px 50px rgba(2,6,23,0.7),
+      inset 0 0 80px rgba(0,0,0,0.25);
+    overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    transform-origin:100% 50%;
+  }
+
+  /* front face (visible initially) */
+  .front{
+    transform:rotateY(0deg);
+  }
+
+  /* back face placed behind (when flipped) */
+  .back{
+    transform:rotateY(-180deg);
+  }
+
+  /* thin paper edge for realism (right edge) */
+  .edge{
+    position:absolute;top:0;right:-6px;width:12px;height:100%;
+    background:linear-gradient(90deg, rgba(255,255,255,0.04), rgba(0,0,0,0.1));
+    border-radius:0 6px 6px 0;
+    z-index:6;pointer-events:none;
+  }
+
+  /* subtle curl shadow on turning side */
+  .sheet::before{
+    content:"";position:absolute;inset:0;border-radius:12px;
+    pointer-events:none;
+    background:
+      linear-gradient(90deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.12) 20%, rgba(0,0,0,0.35) 80%);
+    mix-blend-mode:multiply;opacity:0.35;
+  }
+
+  /* page-number and small UI hints hidden (not visible but part of layout) */
+  .meta{
+    position:absolute;bottom:14px;left:14px;color:rgba(255,255,255,0.85);
+    font-family:system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    font-size:13px;opacity:0.9;transform:translateZ(40px);
+  }
+
+  /* responsive: scale sheet to fit tall or wide screens nicely */
+  @media (min-aspect-ratio: 1/1){
+    .sheet{transform-origin:center center; /* normal */ }
+    .sheet{width: min(88vmin, 72vw); height: calc(min(88vmin,72vw) * 1.414);}
+  }
+
+  /* small visual "page curl" overlay during drag (applied via inline style) */
+  .curl{
+    position:absolute;inset:0;border-radius:12px;pointer-events:none;
+    background:linear-gradient(120deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.06) 8%, rgba(0,0,0,0.0) 30%);
+    mix-blend-mode:overlay;opacity:0.9;z-index:9;
+  }
+
+  /* prevent image selection or drag */
+  img{user-drag:none;user-select:none;-webkit-user-drag:none;}
+
+  /* small instruction-free overlay for edge shadows */
+  .shadow-left, .shadow-right{
+    position:absolute;inset:0;border-radius:12px;pointer-events:none;
+    background:linear-gradient(90deg, rgba(0,0,0,0.45), transparent);
+    opacity:0;transition:opacity .3s;
+  }
+  .shadow-left{transform:rotateY(0deg)}
+  .shadow-right{background:linear-gradient(270deg, rgba(0,0,0,0.45), transparent)}
+
+  /* make interactions smooth on touch */
+  .sheet:active{cursor:grabbing}
 </style>
 </head>
 <body>
-
-<div id="book">
-  <div class="page"><img src="https://picsum.photos/id/1015/1920/1080" alt=""></div>
-  <div class="page"><img src="https://picsum.photos/id/1024/1920/1080" alt=""></div>
-  <div class="page"><img src="https://picsum.photos/id/1035/1920/1080" alt=""></div>
+<div class="stage">
+  <div class="sheet" id="sheet" aria-hidden="false">
+    <div class="side front" id="front"></div>
+    <div class="side back" id="back"></div>
+    <div class="edge"></div>
+    <div class="curl" id="curl" style="opacity:0"></div>
+    <div class="shadow-left" id="sL" style="opacity:0"></div>
+    <div class="shadow-right" id="sR" style="opacity:0"></div>
+    <div class="meta" id="meta"></div>
+  </div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const pageFlip = new St.PageFlip(document.getElementById("book"), {
-    width: window.innerWidth,
-    height: window.innerHeight,
-    size: "stretch",
-    maxShadowOpacity: 0.3,
-    showCover: false,
-    useMouseEvents: true,
-    mobileScrollSupport: false,
-    showPageCorners: false,
-    flippingTime: 1000,
-    direction: "ltr",
-    drawShadow: true,
-    singlePageMode: true // ✅ ورقة واحدة فقط
-  });
+/*
+  صفحة منيو بصفحات صور، تأثير قلب صفحة ثلاثي الأبعاد
+  - اضف روابط الصور في المصفوفة "images"
+  - النقر أو السحب لليسار يقلب للصفحة التالية
+  - السحب لليمين يعود للصفحة السابقة
+  - تم تعطيل التكبير بالإصبع (meta viewport + منع اللمس المتعدد)
+*/
 
-  pageFlip.loadFromHTML(document.querySelectorAll(".page"));
+const images = [
+  // ضع هنا روابط صور المنيو (نصية). أمثلة: (استبدلها بروابطك)
+  "https://images.unsplash.com/photo-1542831371-d531d36971e6?w=1600&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1548946526-f69e2424cf45?w=1600&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=80&auto=format&fit=crop"
+];
 
-  window.addEventListener("resize", () => {
-    pageFlip.update({ width: window.innerWidth, height: window.innerHeight });
-  });
+let idx = 0;
+const sheet = document.getElementById('sheet');
+const front = document.getElementById('front');
+const back = document.getElementById('back');
+const curl = document.getElementById('curl');
+const meta = document.getElementById('meta');
+const sL = document.getElementById('sL');
+const sR = document.getElementById('sR');
+
+function applySides(i){
+  // current image on front, next image on back
+  front.style.backgroundImage = `url("${images[i]}")`;
+  const next = (i+1) % images.length;
+  back.style.backgroundImage = `url("${images[next]}")`;
+  meta.textContent = `${i+1} / ${images.length}`;
+}
+applySides(idx);
+
+// Flip state
+let isFlipped = false;
+let dragging = false;
+let startX = 0;
+let currentRotation = 0; // degrees
+
+// helper: set sheet transform for rotationY in degrees
+function setRotation(deg){
+  currentRotation = deg;
+  sheet.style.transform = `translateZ(0px) rotateY(${deg}deg)`;
+  // adjust shadows and curl to enhance realism
+  const t = Math.abs(deg) / 180; // 0..1
+  sR.style.opacity = deg < 0 ? Math.min(0.9, 0.5 + t*0.5) : 0;
+  sL.style.opacity = deg > 0 ? Math.min(0.9, 0.5 + t*0.5) : 0;
+  curl.style.opacity = Math.min(1, 0.9 * (1 - Math.cos(deg*Math.PI/180)));
+  // subtle perspective translation to mimic page bend
+  const tx = Math.sin(deg*Math.PI/180) * 18;
+  sheet.style.transform += ` translateX(${tx}px)`;
+}
+
+function animateFlip(toDeg, duration=600){
+  sheet.style.transition = `transform ${duration}ms cubic-bezier(.2,.9,.25,1)`;
+  setRotation(toDeg);
+  setTimeout(()=> {
+    sheet.style.transition = '';
+    // update state when fully flipped
+    if (Math.abs(toDeg) >= 90){
+      // increment index when page completed
+      if (toDeg < 0) idx = (idx + 1) % images.length;
+      else if (toDeg > 0) idx = (idx - 1 + images.length) % images.length;
+      // reset to neutral pose with new images
+      setRotation(0);
+      applySides(idx);
+    } else {
+      // returned to neutral
+      setRotation(0);
+    }
+  }, duration);
+}
+
+/* Mouse & touch handling: supports drag and click */
+let lastTap = 0;
+sheet.addEventListener('pointerdown', (e)=>{
+  dragging = true;
+  startX = e.clientX;
+  sheet.setPointerCapture(e.pointerId);
+  sheet.style.transition = ''; // cancel any transition
 });
-</script>
+sheet.addEventListener('pointermove', (e)=>{
+  if(!dragging) return;
+  const dx = e.clientX - startX;
+  // Map dx to rotation (sensitivity)
+  const maxW = Math.max(window.innerWidth, window.innerHeight);
+  let deg = (dx / maxW) * 180; // -180 .. 180
+  // clamp for realism (limit beyond -160..160)
+  deg = Math.max(Math.min(deg, 160), -160);
+  setRotation(deg);
+});
+sheet.addEventListener('pointerup', (e)=>{
+  if(!dragging) return;
+  dragging = false;
+  const dx = e.clientX - startX;
+  const threshold = 0.08 * Math.max(window.innerWidth, window.innerHeight); // small swipe threshold
+  if (dx < -threshold){
+    // flip to next
+    animateFlip(-180, 520);
+  } else if (dx > threshold){
+    // flip to previous (simulate positive rotation)
+    animateFlip(180, 520);
+  } else {
+    // click / tap — detect double-tap to go back quickly? simple single tap flips next
+    const now = Date.now();
+    if (now - lastTap < 300){
+      // double tap -> previous
+      animateFlip(180,520);
+      lastTap = 0;
+    } else {
+      animateFlip(-180,520);
+      lastTap = now;
+    }
+  }
+});
 
+/* Prevent two-finger pinch and pinch-zoom gestures */
+window.addEventListener('touchstart', function(e){
+  if (e.touches && e.touches.length > 1){
+    e.preventDefault();
+  }
+},{passive:false});
+window.addEventListener('gesturestart', function(e){ e.preventDefault(); });
+
+/* keyboard left/right for desktop testers */
+window.addEventListener('keydown', (e)=>{
+  if (e.key === 'ArrowRight') animateFlip(-180,420);
+  if (e.key === 'ArrowLeft') animateFlip(180,420);
+});
+
+/* disable context menu to keep interaction clean */
+window.addEventListener('contextmenu', e => e.preventDefault());
+
+/* initial tiny perspective settle */
+setRotation(0);
+</script>
 </body>
 </html>
