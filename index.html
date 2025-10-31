@@ -1,231 +1,78 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>قلب ورقة واقعية 3D</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>منيو مطعم - قلب ورق واقعي 3D</title>
 
-    body {
-      background: #111;
-      overflow: hidden;
-      height: 100vh;
-      perspective: 3000px;
-      font-family: 'Tajawal', sans-serif;
-      user-select: none;
-    }
+<!-- مكتبة StPageFlip -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/css/page-flip.css">
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
 
-    .scene {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      transform-style: preserve-3d;
-    }
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #111;
+  }
 
-    .page {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      width: 50vw;
-      height: 100vh;
-      transform-style: preserve-3d;
-      transform-origin: left center;
-      cursor: grab;
-      z-index: 10;
-      transition: none;
-    }
+  #book {
+    width: 100vw;
+    height: 100vh;
+  }
 
-    .page:active {
-      cursor: grabbing;
-    }
+  .page {
+    width: 100%;
+    height: 100%;
+  }
 
-    .page-front, .page-back {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      background-size: cover;
-      background-position: center;
-      box-shadow: 0 0 40px rgba(0,0,0,0.6);
-    }
-
-    .page-front {
-      background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
-    }
-
-    .page-back {
-      background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-      transform: rotateY(180deg);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #fff;
-      font-size: 2.5rem;
-      text-align: center;
-      padding: 40px;
-    }
-
-    .fold {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, rgba(0,0,0,0.3) 0%, transparent 40%);
-      transform-origin: right center;
-      transform: perspective(1000px) rotateY(0deg);
-      transition: transform 0.1s ease-out;
-      pointer-events: none;
-      z-index: 5;
-      opacity: 0;
-    }
-
-    .shadow {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to right, rgba(0,0,0,0.7), transparent);
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .page.flipping .fold {
-      opacity: 1;
-    }
-
-    .page.flipping .shadow {
-      opacity: 1;
-    }
-  </style>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700&display=swap" rel="stylesheet">
+  .page img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+</style>
 </head>
 <body>
 
-  <div class="scene">
-    <div class="page" id="page">
-      <div class="page-front"></div>
-      <div class="page-back">
-        <div>
-          <h1>مطعم النخبة</h1>
-          <p>اسحب الصفحة لليسار للقلب</p>
-        </div>
-      </div>
-      <div class="fold"></div>
-    </div>
-    <div class="shadow"></div>
-  </div>
+<div id="book">
+  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1015/1200/800" alt=""></div>
+  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1024/1200/800" alt=""></div>
+  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1035/1200/800" alt=""></div>
+  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1040/1200/800" alt=""></div>
+  <div class="page" data-density="soft"><img src="https://picsum.photos/id/1050/1200/800" alt=""></div>
+</div>
 
-  <script>
-    const page = document.getElementById('page');
-    const fold = page.querySelector('.fold');
-    const scene = document.querySelector('.scene');
-    let isDragging = false;
-    let startX = 0;
-    let currentAngle = 0;
-    const maxAngle = 180;
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const pageFlip = new St.PageFlip(document.getElementById("book"), {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    size: "stretch",           // يملأ الشاشة بالكامل
+    minWidth: 300,
+    minHeight: 400,
+    maxShadowOpacity: 0.6,     // الظل أثناء الانحناء
+    showCover: false,
+    mobileScrollSupport: false,
+    usePortrait: true,
+    useMouseEvents: true,
+  });
 
-    function updateFold(angle) {
-      const foldAngle = Math.min(Math.abs(angle) * 0.5, 60);
-      fold.style.transform = `perspective(1000px) rotateY(-${foldAngle}deg)`;
-      fold.style.opacity = angle > 30 ? 1 : 0;
-    }
+  // تحميل الصفحات من HTML
+  pageFlip.loadFromHTML(document.querySelectorAll(".page"));
 
-    function updatePage(angle) {
-      page.style.transform = `rotateY(-${angle}deg)`;
-      updateFold(angle);
-      
-      if (angle >= maxAngle) {
-        page.classList.add('flipped');
-        setTimeout(() => {
-          currentAngle = 0;
-          page.style.transition = 'none';
-          page.style.transform = `rotateY(-${currentAngle}deg)`;
-          setTimeout(() => { page.style.transition = ''; }, 50);
-        }, 600);
-      } else if (angle <= 0) {
-        page.classList.remove('flipped');
-      }
-    }
-
-    // فأرة
-    page.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
-      isDragging = true;
-      startX = e.clientX;
-      page.classList.add('flipping');
-      e.preventDefault();
+  // تحديث الحجم عند تغيير أبعاد الشاشة
+  window.addEventListener("resize", () => {
+    pageFlip.update({
+      width: window.innerWidth,
+      height: window.innerHeight,
     });
+  });
+});
+</script>
 
-    document.addEventListener('mousemove', e => {
-      if (!isDragging) return;
-      const deltaX = startX - e.clientX;
-      const sensitivity = 0.5;
-      currentAngle = Math.min(Math.max(deltaX * sensitivity, 0), maxAngle);
-      updatePage(currentAngle);
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (!isDragging) return;
-      isDragging = false;
-      page.classList.remove('flipping');
-
-      // إما تكمل القلب أو ترجع
-      if (currentAngle > maxAngle * 0.4) {
-        currentAngle = maxAngle;
-      } else {
-        currentAngle = 0;
-      }
-
-      page.style.transition = 'transform 1s cubic-bezier(0.25, 0.8, 0.25, 1)';
-      updatePage(currentAngle);
-    });
-
-    // لمس (جوال)
-    page.addEventListener('touchstart', e => {
-      isDragging = true;
-      startX = e.touches[0].clientX;
-      page.classList.add('flipping');
-      e.preventDefault();
-    });
-
-    page.addEventListener('touchmove', e => {
-      if (!isDragging) return;
-      const deltaX = startX - e.touches[0].clientX;
-      currentAngle = Math.min(Math.max(deltaX * 0.4, 0), maxAngle);
-      updatePage(currentAngle);
-      e.preventDefault();
-    });
-
-    page.addEventListener('touchend', () => {
-      if (!isDragging) return;
-      isDragging = false;
-      page.classList.remove('flipping');
-
-      if (currentAngle > maxAngle * 0.4) {
-        currentAngle = maxAngle;
-      } else {
-        currentAngle = 0;
-      }
-
-      page.style.transition = 'transform 1s cubic-bezier(0.25, 0.8, 0.25, 1)';
-      updatePage(currentAngle);
-    });
-
-    // إعادة تعيين عند الضغط المزدوج
-    page.addEventListener('dblclick', () => {
-      currentAngle = currentAngle >= maxAngle ? 0 : maxAngle;
-      page.style.transition = 'transform 1s cubic-bezier(0.25, 0.8, 0.25, 1)';
-      updatePage(currentAngle);
-    });
-  </script>
 </body>
 </html>
