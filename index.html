@@ -1,75 +1,71 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ورقة واقعية</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>ورقة واحدة بإنثناء واقعي</title>
 
-<!-- مكتبة 3D FlipBook -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/3d-flip-book/css/3d-flip-book.min.css">
-<script src="https://cdn.jsdelivr.net/npm/3d-flip-book/js/libs/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/3d-flip-book/js/3d-flip-book.min.js"></script>
-
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #000;
-  height: 100%;
-  overflow: hidden;
-  touch-action: none;
-}
-#container {
-  width: 100vw;
-  height: 100vh;
-}
-</style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/3d-flipbook/css/3d-flip-book.min.css">
+  <style>
+    html, body {
+      margin: 0; padding: 0; overflow: hidden;
+      height: 100%; background: #000;
+    }
+    #container {
+      width: 100vw; height: 100vh;
+    }
+    .page img {
+      width: 100%; height: 100%;
+      object-fit: contain;  /* أو cover حسب ما تريد أن تظهر الصورة كاملة أو تملأ */
+      display: block;
+    }
+  </style>
 </head>
 <body>
+  <div id="container"></div>
 
-<div id="container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/3d-flipbook/js/libs/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/3d-flipbook/js/3d-flip-book.min.js"></script>
+  <script>
+    const images = [
+      "https://images.unsplash.com/photo-1478144592103-25e218a04891?auto=format&fit=crop&w=1400&q=80",
+      "https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=1400&q=80",
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1400&q=80"
+    ];
 
-<script>
-const book = {
-  pages: [
-    { src: "https://images.unsplash.com/photo-1478144592103-25e218a04891?auto=format&fit=crop&w=1600&q=80" },
-    { src: "https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=1600&q=80" },
-    { src: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1600&q=80" }
-  ]
-};
+    const container = document.getElementById('container');
+    const flipBook = new St.PageFlip(container, {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      size: "stretch",
+      showCover: false,
+      mobileScrollSupport: false,
+      maxShadowOpacity: 0.6,
+      flippingTime: 900,
+      usePortrait: true,
+      disableFlipByClick: false
+    });
 
-const node = document.getElementById('container');
-const flipbook = new St.PageFlip(node, {
-  width: window.innerWidth,
-  height: window.innerHeight,
-  size: "stretch",
-  showCover: false,
-  mobileScrollSupport: false,
-  maxShadowOpacity: 0.6,
-  flippingTime: 900,
-  usePortrait: true,
-  disableFlipByClick: false,
-});
+    images.forEach(src => {
+      const pageElement = document.createElement("div");
+      pageElement.className = "page";
+      pageElement.innerHTML = `<img src="${src}" alt="صفحة من المنيو">`;
+      container.appendChild(pageElement);
+    });
 
-book.pages.forEach((p) => {
-  const page = document.createElement("div");
-  page.classList.add("page");
-  page.innerHTML = `<img src="${p.src}" style="width:100%;height:100%;object-fit:contain;">`;
-  node.appendChild(page);
-});
+    flipBook.loadFromHTML(container);
 
-flipbook.loadFromHTML(node);
+    document.body.addEventListener("pointerup", (e) => {
+      if (e.clientX > window.innerWidth / 2) {
+        flipBook.flipNext();
+      } else {
+        flipBook.flipPrev();
+      }
+    });
 
-// عند الضغط أو السحب للقلب
-document.body.addEventListener("pointerup", (e) => {
-  if (e.clientX > window.innerWidth / 2) flipbook.flipNext();
-  else flipbook.flipPrev();
-});
-
-window.addEventListener("resize", () => {
-  flipbook.update();
-});
-</script>
-
+    window.addEventListener("resize", () => {
+      flipBook.update();
+    });
+  </script>
 </body>
 </html>
