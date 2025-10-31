@@ -2,60 +2,70 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>منيو 3D صفحة كاملة</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منيو ثلاثي الأبعاد</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/css/page-flip.css">
 <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
 <style>
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
     overflow: hidden;
+    height: 100%;
     background: #000;
   }
+
   #book {
     width: 100vw;
     height: 100vh;
+    position: relative;
   }
+
   .page {
     width: 100%;
     height: 100%;
+    overflow: hidden;
   }
+
   .page img {
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-    user-select:none;
-    pointer-events:none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    user-select: none;
+    pointer-events: none;
   }
 </style>
 </head>
 <body>
 
 <div id="book">
-  <div class="page"><img src="https://picsum.photos/id/1015/1600/900" alt=""></div>
-  <div class="page"><img src="https://picsum.photos/id/1024/1600/900" alt=""></div>
-  <div class="page"><img src="https://picsum.photos/id/1035/1600/900" alt=""></div>
+  <div class="page"><img src="https://picsum.photos/id/1015/1920/1080" alt=""></div>
+  <div class="page"><img src="https://picsum.photos/id/1024/1920/1080" alt=""></div>
+  <div class="page"><img src="https://picsum.photos/id/1035/1920/1080" alt=""></div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const pf = new St.PageFlip(document.getElementById("book"), {
+  const pageFlip = new St.PageFlip(document.getElementById("book"), {
     width: window.innerWidth,
     height: window.innerHeight,
     size: "stretch",
+    maxShadowOpacity: 0.3,
     showCover: false,
     useMouseEvents: true,
     mobileScrollSupport: false,
-    flippingTime: 800,
-    startPage: 0
+    showPageCorners: false,
+    flippingTime: 1000,
+    direction: "ltr",
+    drawShadow: true,
+    singlePageMode: true // ✅ ورقة واحدة فقط
   });
-  pf.loadFromHTML(document.querySelectorAll(".page"));
+
+  pageFlip.loadFromHTML(document.querySelectorAll(".page"));
 
   window.addEventListener("resize", () => {
-    pf.update({ width: window.innerWidth, height: window.innerHeight });
+    pageFlip.update({ width: window.innerWidth, height: window.innerHeight });
   });
 });
 </script>
