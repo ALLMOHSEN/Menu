@@ -3,55 +3,99 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>منيو تفاعلي</title>
-
+<title>قلب ورقة واقعي</title>
 <style>
 html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: #000;
   height: 100%;
+  background: #000;
+  touch-action: none;
 }
-#book {
+#container {
   width: 100vw;
   height: 100vh;
+  perspective: 2000px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .page {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  transform-origin: left center;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition: transform 1s cubic-bezier(0.45, 0, 0.55, 1);
 }
 .page img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  border: none;
+}
+.shadow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(rgba(0,0,0,0.4), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s;
 }
 </style>
 </head>
 <body>
 
-<div id="book">
-  <div class="page"><img src="menu1.jpg" alt=""></div>
-  <div class="page"><img src="menu2.jpg" alt=""></div>
-  <div class="page"><img src="menu3.jpg" alt=""></div>
-  <div class="page"><img src="menu4.jpg" alt=""></div>
+<div id="container">
+  <div class="page" id="page1"><img src="menu1.jpg"></div>
+  <div class="page" id="page2"><img src="menu2.jpg"></div>
+  <div class="page" id="page3"><img src="menu3.jpg"></div>
+  <div class="page" id="page4"><img src="menu4.jpg"></div>
+  <div class="shadow" id="shadow"></div>
 </div>
 
-<!-- مكتبة jQuery و Turn.js -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://www.turnjs.com/lib/turn.min.js"></script>
-
 <script>
-$('#book').turn({
-  width: window.innerWidth,
-  height: window.innerHeight,
-  autoCenter: true,
-  display: 'single',
-  acceleration: true,
-  gradients: true,
-  elevation: 100,
+let current = 0;
+const pages = document.querySelectorAll('.page');
+const shadow = document.getElementById('shadow');
+let flipping = false;
+
+function showPage(index, direction) {
+  if (flipping) return;
+  flipping = true;
+  shadow.style.opacity = 0.5;
+
+  const currentPage = pages[current];
+  const nextPage = pages[index];
+
+  nextPage.style.transform = `rotateY(${direction === 'next' ? 180 : -180}deg)`;
+  nextPage.style.zIndex = 1;
+  currentPage.style.zIndex = 2;
+
+  setTimeout(() => {
+    currentPage.style.transition = 'transform 1s cubic-bezier(0.45,0,0.55,1)';
+    currentPage.style.transform = `rotateY(${direction === 'next' ? -180 : 180}deg)`;
+  }, 10);
+
+  setTimeout(() => {
+    currentPage.style.transition = '';
+    currentPage.style.transform = '';
+    nextPage.style.transform = '';
+    currentPage.style.zIndex = '';
+    shadow.style.opacity = 0;
+    current = index;
+    flipping = false;
+  }, 1000);
+}
+
+document.body.addEventListener('click', e => {
+  const direction = e.clientX > window.innerWidth / 2 ? 'next' : 'prev';
+  let nextIndex = current + (direction === 'next' ? 1 : -1);
+  if (nextIndex < 0) nextIndex = pages.length - 1;
+  if (nextIndex >= pages.length) nextIndex = 0;
+  showPage(nextIndex, direction);
 });
 </script>
 
