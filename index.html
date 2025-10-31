@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>منيو المطعم - كتاب الورق</title>
+  <title>تأثير قلب الورق</title>
   <style>
     * {
       margin: 0;
@@ -14,8 +14,9 @@
     body {
       background: #000;
       overflow: hidden;
-      font-family: 'Tajawal', sans-serif;
       perspective: 2000px;
+      height: 100vh;
+      font-family: 'Tajawal', sans-serif;
     }
 
     .book {
@@ -23,256 +24,128 @@
       width: 100vw;
       height: 100vh;
       transform-style: preserve-3d;
-      margin: 0 auto;
     }
 
     .page {
       position: absolute;
+      top: 0;
+      left: 50%;
       width: 50vw;
       height: 100vh;
       background: #fff;
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
       transform-style: preserve-3d;
-      transition: transform 1.5s cubic-bezier(0.645, 0.045, 0.355, 1);
-      backface-visibility: hidden;
-      overflow: hidden;
+      transform-origin: left center;
+      transition: transform 1.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+      cursor: pointer;
+      z-index: 10;
     }
 
-    .page .front, .page .back {
+    .page::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, transparent 10%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .front, .back {
       position: absolute;
       width: 100%;
       height: 100%;
+      backface-visibility: hidden;
       background-size: cover;
       background-position: center;
+    }
+
+    .front {
+      background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+    }
+
+    .back {
+      background: #111;
+      transform: rotateY(180deg);
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      color: white;
-      text-align: center;
-      padding: 50px;
-    }
-
-    .page .back {
-      transform: rotateY(180deg);
-    }
-
-    /* صفحة الغلاف */
-    #page0 {
-      left: 50%;
-      background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
-      background-size: cover;
-      z-index: 100;
-    }
-
-    /* باقي الصفحات */
-    .page:nth-child(2) { z-index: 99; }
-    .page:nth-child(3) { z-index: 98; }
-    .page:nth-child(4) { z-index: 97; }
-    .page:nth-child(5) { z-index: 96; }
-
-    .flipped {
-      transform: rotateY(-180deg) !important;
-      z-index: 100 !important;
-    }
-
-    .content {
-      background: rgba(0,0,0,0.5);
-      padding: 30px;
-      border-radius: 15px;
-      max-width: 80%;
-      backdrop-filter: blur(5px);
-    }
-
-    h1 {
-      font-size: 3.5rem;
-      margin-bottom: 20px;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.7);
-    }
-
-    h2 {
-      font-size: 2.5rem;
-      margin: 30px 0 15px;
-      color: #ffd700;
-    }
-
-    p {
-      font-size: 1.3rem;
-      line-height: 1.8;
-      margin-bottom: 15px;
-    }
-
-    .price {
-      font-weight: bold;
-      color: #ffd700;
-      font-size: 1.5rem;
-    }
-
-    .nav-btn {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(255,255,255,0.2);
-      color: white;
-      border: none;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
+      color: #fff;
       font-size: 2rem;
-      cursor: pointer;
-      z-index: 200;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      transition: all 0.3s;
+      text-align: center;
+      padding: 40px;
     }
 
-    .nav-btn:hover {
-      background: rgba(255,255,255,0.4);
-      transform: translateY(-50%) scale(1.1);
+    .page.flipped {
+      transform: rotateY(-180deg);
+      z-index: 5;
     }
 
-    #prev-btn { left: 20px; }
-    #next-btn { right: 20px; }
+    .page-shadow {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 30%);
+      opacity: 0;
+      transition: opacity 1.8s;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .page.flipped + .page-shadow {
+      opacity: 1;
+    }
 
     @media (max-width: 768px) {
-      h1 { font-size: 2.5rem; }
-      h2 { font-size: 1.8rem; }
-      p { font-size: 1.1rem; }
-      .content { padding: 20px; }
+      .back { font-size: 1.5rem; padding: 20px; }
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <div class="book" id="book">
-    <!-- صفحة الغلاف -->
-    <div class="page" id="page0">
-      <div class="front">
-        <div class="content">
-          <h1>مطعم النخبة</h1>
-          <p>تجربة طعام لا تُنسى</p>
-        </div>
-      </div>
-      <div class="back"></div>
-    </div>
-
-    <!-- صفحة 1 (المقبلات) -->
-    <div class="page" id="page1">
-      <div class="front" style="background-image: url('https://images.unsplash.com/photo-1546833999-b9f581a748ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
-        <div class="content">
-          <h2>المقبلات</h2>
-          <p>حمص بالطحينة <span class="price">15 ر.س</span></p>
-          <p>متبل <span class="price">14 ر.س</span></p>
-          <p>ورق عنب <span class="price">18 ر.س</span></p>
-          <p>فتوش <span class="price">16 ر.س</span></p>
-        </div>
-      </div>
-      <div class="back"></div>
-    </div>
-
-    <!-- صفحة 2 (الأطباق الرئيسية) -->
-    <div class="page" id="page2">
-      <div class="front" style="background-image: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
-        <div class="content">
-          <h2>الأطباق الرئيسية</h2>
-          <p>كباب مشوي <span class="price">45 ر.س</span></p>
-          <p>مندي لحم <span class="price">55 ر.س</span></p>
-          <p>سمك مشوي بالأعشاب <span class="price">60 ر.س</span></p>
-          <p>بيتزا مارغريتا <span class="price">38 ر.س</span></p>
-        </div>
-      </div>
-      <div class="back"></div>
-    </div>
-
-    <!-- صفحة 3 (الحلويات) -->
-    <div class="page" id="page3">
-      <div class="front" style="background-image: url('https://images.unsplash.com/photo-1563805042-7684c7f05791?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
-        <div class="content">
-          <h2>الحلويات</h2>
-          <p>كنافة بالجبن <span class="price">25 ر.س</span></p>
-          <p>أم علي <span class="price">22 ر.س</span></p>
-          <p>تشيز كيك <span class="price">28 ر.س</span></p>
-          <p>آيس كريم فانيليا <span class="price">18 ر.س</span></p>
-        </div>
-      </div>
-      <div class="back"></div>
-    </div>
-
-    <!-- صفحة 4 (المشروبات) -->
-    <div class="page" id="page4">
-      <div class="front" style="background-image: url('https://images.unsplash.com/photo-1551024709-8f23befc6f87?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');">
-        <div class="content7">
-          <h2>المشروبات</h2>
-          <p>قهوة عربية <span class="price">12 ر.س</span></p>
-          <p>شاي بالنعناع <span class="price">10 ر.س</span></p>
-          <p>عصير برتقال طازج <span class="price">15 ر.س</span></p>
-          <p>موهيتو <span class="price">20 ر.س</span></p>
-        </div>
-      </div>
-      <div class="back" style="background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80'); background-size: cover;">
-        <div class="content">
-          <h1>شكرًا لزيارتكم</h1>
-          <p>نراكم قريبًا!</p>
+  <div class="book">
+    <div class="page" id="page">
+      <div class="front"></div>
+      <div class="back">
+        <div>
+          <h1>مرحباً بكم!</h1>
+          <p>انقر أو اسحب لقلب الصفحة</p>
         </div>
       </div>
     </div>
+    <div class="page-shadow"></div>
   </div>
 
-  <button class="nav-btn" id="prev-btn">❮</button>
-  <button class="nav-btn" id="next-btn">❯</button>
-
   <script>
-    const book = document.getElementById('book');
-    const pages = document.querySelectorAll('.page');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    let currentPage = 0;
-    const totalPages = pages.length;
+    const page = document.getElementById('page');
+    let isFlipping = false;
 
-    function goToPage(pageNum) {
-      pages.forEach((page, index) => {
-        if (index <= pageNum) {
-          page.classList.add('flipped');
-          page.style.zIndex = totalPages - index;
-        } else {
-          page.classList.remove('flipped');
-          page.style.zIndex = index;
-        }
-      });
-      currentPage = pageNum;
+    function flip() {
+      if (isFlipping) return;
+      isFlipping = true;
+      page.classList.toggle('flipped');
+      setTimeout(() => { isFlipping = false; }, 1800);
     }
 
-    nextBtn.addEventListener('click', () => {
-      if (currentPage < totalPages - 1) {
-        goToPage(currentPage + 1);
-      }
+    // النقر
+    page.addEventListener('click', flip);
+
+    // السحب (لمس)
+    let startX = 0;
+    page.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
     });
 
-    prevBtn.addEventListener('click', () => {
-      if (currentPage > 0) {
-        goToPage(currentPage - 1);
-      }
+    page.addEventListener('touchend', e => {
+      const endX = e.changedTouches[0].clientX;
+      const diff = startX - endX;
+      if (Math.abs(diff) > 50) flip();
     });
-
-    // دعم السحب باللمس (للجوال)
-    let touchStartX = 0;
-    book.addEventListener('touchstart', e => {
-      touchStartX = e.changedTouches[0].screenX;
-    });
-
-    book.addEventListener('touchend', e => {
-      const touchEndX = e.changedTouches[0].screenX;
-      if (touchStartX - touchEndX > 50) {
-        if (currentPage < totalPages - 1) goToPage(currentPage + 1);
-      }
-      if (touchEndX - touchStartX > 50) {
-        if (currentPage > 0) goToPage(currentPage - 1);
-      }
-    });
-
-    // بدء من الغلاف
-    goToPage(0);
   </script>
 </body>
 </html>
