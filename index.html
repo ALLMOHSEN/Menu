@@ -1,71 +1,350 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>ورقة واحدة بإنثناء واقعي</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" />
+<title>قلب صفحة بصورة كاملة</title>
+<style>
+  :root {
+    --bg:#0b0b0b;
+    --page-w:100vw;
+    --page-h:100vh;
+  }
+  html,body{
+    height:100%;
+    margin:0;
+    background:var(--bg);
+    overflow:hidden; /* يمنع التمرير */
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none; /* يمنع السلوك الافتراضي لللمس (التمرير) */
+    direction: rtl;
+  }
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/3d-flipbook/css/3d-flip-book.min.css">
-  <style>
-    html, body {
-      margin: 0; padding: 0; overflow: hidden;
-      height: 100%; background: #000;
-    }
-    #container {
-      width: 100vw; height: 100vh;
-    }
-    .page img {
-      width: 100%; height: 100%;
-      object-fit: contain;  /* أو cover حسب ما تريد أن تظهر الصورة كاملة أو تملأ */
-      display: block;
-    }
-  </style>
+  /* حاوية الكتاب */
+  .book {
+    width:var(--page-w);
+    height:var(--page-h);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    perspective:1800px; /* عمق 3D */
+  }
+
+  /* الورقة (صفحة واحدة) */
+  .page {
+    width:var(--page-w);
+    height:var(--page-h);
+    position:relative;
+    transform-style:preserve-3d;
+    transition: transform 700ms cubic-bezier(.2,.9,.3,1);
+    will-change: transform;
+    transform-origin: left center; /* سنغيّره ديناميكياً تبعاً لليمين/اليسار */
+    cursor:grab;
+    -webkit-user-drag:none;
+  }
+  .page:active { cursor:grabbing; }
+
+  /* وجها الورقة - أمامي وخلفي */
+  .face {
+    position:absolute;
+    inset:0;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .face img{
+    max-width:100%;
+    max-height:100%;
+    object-fit:contain; /* يُظهر الصورة بالكامل بدون اقتطاع */
+    display:block;
+    pointer-events:none;
+    user-drag:none;
+    user-select:none;
+  }
+
+  /* الوجه الخلفي مع دوران 180 */
+  .back {
+    transform:rotateY(180deg);
+  }
+
+  /* ظل وانحناءة لجعل التأثير واقعي */
+  .page::after {
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:linear-gradient(90deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 30% );
+    mix-blend-mode:multiply;
+    opacity:0.0;
+    transition:opacity 200ms;
+  }
+
+  /* ظل جانبي متغير أثناء التقليب */
+  .page-shadow {
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:20;
+    background: radial-gradient(1200px 300px at 50% 50%,
+      rgba(0,0,0,0.5), rgba(0,0,0,0) 40%);
+    opacity:0;
+    transition:opacity 200ms;
+    transform:translateZ(-1px);
+  }
+
+  /* تعليمات صغيرة في الأعلى (اختياري) */
+  .hint {
+    position:fixed;
+    left:16px;
+    top:12px;
+    color:#ddd;
+    font-family:system-ui, "Segoe UI", Roboto, "Noto Sans Arabic", Arial;
+    z-index:999;
+    background:rgba(0,0,0,0.3);
+    padding:6px 10px;
+    border-radius:8px;
+    font-size:13px;
+  }
+
+  /* استجابة للشاشات الصغيرة */
+  @media (max-width:600px){
+    .hint { font-size:12px; padding:5px 8px; }
+  }
+</style>
 </head>
 <body>
-  <div id="container"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/3d-flipbook/js/libs/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/3d-flipbook/js/3d-flip-book.min.js"></script>
-  <script>
-    const images = [
-      "https://images.unsplash.com/photo-1478144592103-25e218a04891?auto=format&fit=crop&w=1400&q=80",
-      "https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=1400&q=80",
-      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1400&q=80"
-    ];
+<div class="hint">اضغط أو اسحب من اليمين/اليسار لقلب الصفحة</div>
 
-    const container = document.getElementById('container');
-    const flipBook = new St.PageFlip(container, {
-      width: window.innerWidth,
-      height: window.innerHeight,
-      size: "stretch",
-      showCover: false,
-      mobileScrollSupport: false,
-      maxShadowOpacity: 0.6,
-      flippingTime: 900,
-      usePortrait: true,
-      disableFlipByClick: false
-    });
+<div class="book" id="book" aria-hidden="false">
+  <div class="page" id="page"
+       data-img-src="your-image.jpg"  <!-- ضع اسم/مسار صورتك هنا -->
+       data-flipped="false"
+       >
+    <div class="face front">
+      <img id="img-front" src="" alt="صورة الصفحة الأمامية">
+    </div>
+    <div class="face back">
+      <img id="img-back" src="" alt="صورة الصفحة الخلفية">
+    </div>
+    <div class="page-shadow" id="pageShadow"></div>
+  </div>
+</div>
 
-    images.forEach(src => {
-      const pageElement = document.createElement("div");
-      pageElement.className = "page";
-      pageElement.innerHTML = `<img src="${src}" alt="صفحة من المنيو">`;
-      container.appendChild(pageElement);
-    });
+<script>
+/*
+  ملاحظات التصميم:
+  - الصورة تُعرض على الوجهين (أو يمكنك وضع وجه خلفي مختلف بتغيير src).
+  - object-fit: contain يظهر الصورة كاملة (بدون اقتطاع) مع ترك مسافات جانبية/علوية بحسب نسبة الأبعاد.
+  - التأثير يعمل بالماوس ولمس الشاشة (Pointer events).
+*/
 
-    flipBook.loadFromHTML(container);
+(function(){
+  const page = document.getElementById('page');
+  const frontImg = document.getElementById('img-front');
+  const backImg  = document.getElementById('img-back');
+  const shadow   = document.getElementById('pageShadow');
+  const book = document.getElementById('book');
 
-    document.body.addEventListener("pointerup", (e) => {
-      if (e.clientX > window.innerWidth / 2) {
-        flipBook.flipNext();
-      } else {
-        flipBook.flipPrev();
-      }
-    });
+  // استخدم الصورة المعنونة في الـ HTML أو ضع هنا رابط افتراضي
+  const src = page.dataset.imgSrc || 'your-image.jpg';
+  frontImg.src = src;
+  backImg.src  = src; // نفس الصورة على الظهر. غيّر لو تريد أخرى.
 
-    window.addEventListener("resize", () => {
-      flipBook.update();
-    });
-  </script>
+  let dragging = false;
+  let startX = 0;
+  let currentX = 0;
+  let width = window.innerWidth;
+  let origin = 'left'; // نقطة الأصل الافتراضية
+  let direction = 'leftToRight'; // اتجاه الافتراضي عند السحب
+  let flipped = (page.dataset.flipped === 'true');
+
+  // تهيئة نقطة الأصل بحسب الحالة
+  function setTransformOriginForFlip(dir){
+    if(dir === 'leftToRight'){ // قلب إلى اليمين — الأصل من اليسار
+      page.style.transformOrigin = 'left center';
+      origin = 'left';
+    } else { // قلب إلى اليسار — الأصل من اليمين
+      page.style.transformOrigin = 'right center';
+      origin = 'right';
+    }
+  }
+  setTransformOriginForFlip('leftToRight');
+
+  // وظيفة لتعيين زاوية الدوران (deg بين 0 و 180 أو 0 و -180)
+  function setRotation(deg){
+    page.style.transform = `rotateY(${deg}deg)`;
+    // ظل يعتمد على مدى التقليب
+    const abs = Math.min(1, Math.abs(deg) / 90); // 0..1
+    page.style.setProperty('--flip-progress', abs);
+    shadow.style.opacity = Math.min(0.9, 0.2 + abs * 0.7);
+    // تغيير تدرج الظل الداخلي للواقعية
+    page.style.setProperty('--after-opacity', Math.min(0.6, abs * 0.9));
+    page.style.setProperty('--deg', deg + 'deg');
+    page.querySelector('::after');
+    // أثناء دوران أكبر من 90، نرفع z-index لتجنب اختفاء
+    if(Math.abs(deg) > 90){
+      page.style.zIndex = 5;
+    } else {
+      page.style.zIndex = 1;
+    }
+  }
+
+  // نهاية التقليب: نقرر إذا نكمل إلى 0 أو 180
+  function endDrag(){
+    if(!dragging) return;
+    dragging = false;
+    page.style.transition = 'transform 500ms cubic-bezier(.2,.9,.3,1)';
+    shadow.style.transition = 'opacity 300ms';
+    const dx = currentX - startX;
+    const threshold = width * 0.15; // نسبة لاتخاذ القرار
+    // حساب زاوية حالية
+    let percent = Math.max(-1, Math.min(1, dx / width));
+    let deg = percent * 180;
+    // إذا الأصل من اليمين نعكس الحساب
+    if(origin === 'right') deg = -deg;
+
+    // قرار الإكمال أو العودة
+    if(Math.abs(dx) > threshold){
+      // إكمال التقليب إلى الجهة المكتملة
+      const finishDeg = (deg > 0) ? 180 : -180;
+      setRotation(finishDeg);
+      flipped = true;
+      page.dataset.flipped = 'true';
+      // بعد الانتهاء نضع زاوية 180 (ثابت)
+      setTimeout(()=> {
+        // ضابط لزوايا > 180 إلى 180 بالضبط
+        setRotation(finishDeg);
+        page.style.transition = '';
+        shadow.style.transition = '';
+      }, 520);
+    } else {
+      // العودة للوضع الأصلي (0)
+      setRotation(0);
+      flipped = false;
+      page.dataset.flipped = 'false';
+      setTimeout(()=> {
+        page.style.transition = '';
+        shadow.style.transition = '';
+      }, 520);
+    }
+  }
+
+  // بدء السحب أو اللمس
+  function startDrag(clientX){
+    dragging = true;
+    startX = clientX;
+    currentX = clientX;
+    width = window.innerWidth || document.documentElement.clientWidth;
+    page.style.transition = ''; // تعطيل الانتقال أثناء السحب
+    shadow.style.transition = '';
+  }
+  function moveDrag(clientX){
+    if(!dragging) return;
+    currentX = clientX;
+    const dx = currentX - startX;
+    const percent = Math.max(-1, Math.min(1, dx / width));
+    let deg = percent * 180;
+    // نعكس إذا الأصل من اليمين
+    if(origin === 'right') deg = -deg;
+    // نحد الزاوية
+    if(deg > 180) deg = 180;
+    if(deg < -180) deg = -180;
+    setRotation(deg);
+    // تدريج الظل أثناء السحب
+    shadow.style.opacity = Math.min(0.9, 0.15 + Math.abs(percent)*0.8);
+  }
+
+  // مصفوفة أحداث المؤشر (تعمل على اللمس والماوس)
+  page.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    // تحديد اتجاه قلب الورقة حسب مكان الضغط (يمين/يسار)
+    const x = e.clientX;
+    const mid = window.innerWidth / 2;
+    if(x < mid){
+      // ضغط في النصف الأيمن (لناحية RTL) => قلب من اليمين إلى اليسار
+      setTransformOriginForFlip('rightToLeft');
+    } else {
+      setTransformOriginForFlip('leftToRight');
+    }
+    startDrag(e.clientX);
+    page.setPointerCapture(e.pointerId);
+  });
+
+  page.addEventListener('pointermove', (e) => {
+    if(!dragging) return;
+    moveDrag(e.clientX);
+  });
+
+  page.addEventListener('pointerup', (e) => {
+    if(!dragging) return;
+    page.releasePointerCapture(e.pointerId);
+    endDrag();
+  });
+
+  page.addEventListener('pointercancel', (e) => {
+    if(!dragging) return;
+    page.releasePointerCapture(e.pointerId);
+    endDrag();
+  });
+
+  // دعم النقر البسيط لقلب (بدون سحب) — يشتغل على النقر/اللمسة
+  page.addEventListener('click', (e) => {
+    // إذا كان هناك سحب بسيط جداً لا نعتبره نقرة
+    if(Math.abs(currentX - startX) > 8 && dragging) return;
+    // قلب سريع: نحدد أي اتجاه بناءً على موقع النقر
+    const x = e.clientX;
+    const mid = window.innerWidth / 2;
+    const dir = (x < mid) ? 'rightToLeft' : 'leftToRight';
+    setTransformOriginForFlip(dir);
+    page.style.transition = 'transform 700ms cubic-bezier(.2,.9,.3,1)';
+    shadow.style.transition = 'opacity 350ms';
+    if(!flipped){
+      setRotation(dir === 'leftToRight' ? 180 : -180);
+      flipped = true;
+      page.dataset.flipped = 'true';
+    } else {
+      setRotation(0);
+      flipped = false;
+      page.dataset.flipped = 'false';
+    }
+    // إزالة الـ transition بعد انتهاء الحركة
+    setTimeout(()=> {
+      page.style.transition = '';
+      shadow.style.transition = '';
+    }, 720);
+  });
+
+  // إعادة ضبط عند تغيير حجم النافذة
+  window.addEventListener('resize', () => {
+    width = window.innerWidth;
+    // نعيد ضبط الصورة لتبقى كاملة (object-fit:contain يتعامل مع ذلك تلقائياً)
+  });
+
+  // منع السحب الافتراضي على الهواتف داخل الصفحة (لضمان تجربة قلب سلسة)
+  document.addEventListener('touchmove', function(e){
+    if(dragging) e.preventDefault();
+  }, {passive:false});
+
+  // بداية: عرض الصورة (موجودة في dataset)
+  // يمكنك تعديل src في dataset أو هنا مباشرة
+  // frontImg.src = 'path/to/your-image.jpg';
+
+  // Optional: تحسينات الظلال أثناء المرور بالماوس
+  page.addEventListener('pointerenter', () => {
+    page.style.boxShadow = '0 30px 80px rgba(0,0,0,0.6)';
+  });
+  page.addEventListener('pointerleave', () => {
+    if(!dragging) page.style.boxShadow = '';
+  });
+
+})();
+</script>
 </body>
 </html>
