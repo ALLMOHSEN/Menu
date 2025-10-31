@@ -3,99 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>قلب ورقة واقعي</title>
+<title>قلب ورق واقعي</title>
+
+<link rel="stylesheet" href="https://unpkg.com/page-flip/dist/page-flip.css">
 <style>
 html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  height: 100%;
   background: #000;
-  touch-action: none;
+  height: 100%;
 }
-#container {
+#book {
   width: 100vw;
   height: 100vh;
-  perspective: 2000px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.page {
-  width: 100vw;
-  height: 100vh;
-  position: absolute;
-  transform-origin: left center;
-  backface-visibility: hidden;
-  transform-style: preserve-3d;
-  transition: transform 1s cubic-bezier(0.45, 0, 0.55, 1);
 }
 .page img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-}
-.shadow {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(rgba(0,0,0,0.4), transparent 70%);
-  opacity: 0;
-  transition: opacity 0.5s;
+  border: none;
 }
 </style>
 </head>
 <body>
 
-<div id="container">
-  <div class="page" id="page1"><img src="menu1.jpg"></div>
-  <div class="page" id="page2"><img src="menu2.jpg"></div>
-  <div class="page" id="page3"><img src="menu3.jpg"></div>
-  <div class="page" id="page4"><img src="menu4.jpg"></div>
-  <div class="shadow" id="shadow"></div>
+<div id="book" class="page-flip-book">
+  <div class="page"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80"></div>
+  <div class="page"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=70"></div>
+  <div class="page"><img src="https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=1200&q=80"></div>
+  <div class="page"><img src="https://images.unsplash.com/photo-1478144592103-25e218a04891?auto=format&fit=crop&w=1200&q=80"></div>
 </div>
 
+<script src="https://unpkg.com/page-flip/dist/page-flip.browser.min.js"></script>
 <script>
-let current = 0;
-const pages = document.querySelectorAll('.page');
-const shadow = document.getElementById('shadow');
-let flipping = false;
+const pageFlip = new St.PageFlip(document.getElementById("book"), {
+  width: window.innerWidth,
+  height: window.innerHeight,
+  size: "stretch",
+  maxShadowOpacity: 0.6,
+  showCover: false,
+  mobileScrollSupport: false,
+  usePortrait: true,
+  flippingTime: 1000,
+  startPage: 0,
+  disableFlipByClick: false,
+});
 
-function showPage(index, direction) {
-  if (flipping) return;
-  flipping = true;
-  shadow.style.opacity = 0.5;
+// تحميل الصفحات
+document.querySelectorAll(".page").forEach((el) => {
+  pageFlip.loadFromHTML(el);
+});
 
-  const currentPage = pages[current];
-  const nextPage = pages[index];
-
-  nextPage.style.transform = `rotateY(${direction === 'next' ? 180 : -180}deg)`;
-  nextPage.style.zIndex = 1;
-  currentPage.style.zIndex = 2;
-
-  setTimeout(() => {
-    currentPage.style.transition = 'transform 1s cubic-bezier(0.45,0,0.55,1)';
-    currentPage.style.transform = `rotateY(${direction === 'next' ? -180 : 180}deg)`;
-  }, 10);
-
-  setTimeout(() => {
-    currentPage.style.transition = '';
-    currentPage.style.transform = '';
-    nextPage.style.transform = '';
-    currentPage.style.zIndex = '';
-    shadow.style.opacity = 0;
-    current = index;
-    flipping = false;
-  }, 1000);
-}
-
-document.body.addEventListener('click', e => {
-  const direction = e.clientX > window.innerWidth / 2 ? 'next' : 'prev';
-  let nextIndex = current + (direction === 'next' ? 1 : -1);
-  if (nextIndex < 0) nextIndex = pages.length - 1;
-  if (nextIndex >= pages.length) nextIndex = 0;
-  showPage(nextIndex, direction);
+// التقليب بالضغط يمين/يسار
+document.body.addEventListener("click", (e) => {
+  if (e.clientX > window.innerWidth / 2) {
+    pageFlip.flipNext();
+  } else {
+    pageFlip.flipPrev();
+  }
 });
 </script>
 
