@@ -1,105 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>3D Page Curl Effect</title>
+<title>ورقة واقعية</title>
+
+<!-- مكتبة 3D FlipBook -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/3d-flip-book/css/3d-flip-book.min.css">
+<script src="https://cdn.jsdelivr.net/npm/3d-flip-book/js/libs/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/3d-flip-book/js/3d-flip-book.min.js"></script>
+
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    height: 100%;
-    background: #000;
-  }
-  canvas { display: block; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+}
+#container {
+  width: 100vw;
+  height: 100vh;
+}
 </style>
 </head>
 <body>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.min.js"></script>
+<div id="container"></div>
 
 <script>
-let scene, camera, renderer, mesh, frontTexture, backTexture;
-let curl = 0, targetCurl = 0;
-let flipping = false;
+const book = {
+  pages: [
+    { src: "https://images.unsplash.com/photo-1478144592103-25e218a04891?auto=format&fit=crop&w=1600&q=80" },
+    { src: "https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=1600&q=80" },
+    { src: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1600&q=80" }
+  ]
+};
 
-init();
-animate();
+const node = document.getElementById('container');
+const flipbook = new St.PageFlip(node, {
+  width: window.innerWidth,
+  height: window.innerHeight,
+  size: "stretch",
+  showCover: false,
+  mobileScrollSupport: false,
+  maxShadowOpacity: 0.6,
+  flippingTime: 900,
+  usePortrait: true,
+  disableFlipByClick: false,
+});
 
-function init() {
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
-  camera.position.z = 2;
+book.pages.forEach((p) => {
+  const page = document.createElement("div");
+  page.classList.add("page");
+  page.innerHTML = `<img src="${p.src}" style="width:100%;height:100%;object-fit:contain;">`;
+  node.appendChild(page);
+});
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+flipbook.loadFromHTML(node);
 
-  const loader = new THREE.TextureLoader();
-  frontTexture = loader.load("https://images.unsplash.com/photo-1478144592103-25e218a04891?auto=format&fit=crop&w=1600&q=80");
-  backTexture  = loader.load("https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=1600&q=80");
+// عند الضغط أو السحب للقلب
+document.body.addEventListener("pointerup", (e) => {
+  if (e.clientX > window.innerWidth / 2) flipbook.flipNext();
+  else flipbook.flipPrev();
+});
 
-  const geometry = new THREE.PlaneGeometry(2, 1.4, 100, 100);
-  const material = new THREE.ShaderMaterial({
-    uniforms: {
-      texFront: { value: frontTexture },
-      texBack: { value: backTexture },
-      curl: { value: 0.0 }
-    },
-    vertexShader: `
-      uniform float curl;
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        vec3 pos = position;
-        float bend = sin(pos.x * 3.1415) * curl;
-        pos.z += bend * 0.5;
-        pos.x += bend * 0.2;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform sampler2D texFront;
-      uniform sampler2D texBack;
-      uniform float curl;
-      varying vec2 vUv;
-      void main() {
-        if (vUv.x < (0.5 + curl)) {
-          gl_FragColor = texture2D(texFront, vUv);
-        } else {
-          gl_FragColor = texture2D(texBack, vec2(1.0 - vUv.x, vUv.y));
-        }
-      }
-    `,
-    side: THREE.DoubleSide
-  });
-
-  mesh = new THREE.Mesh(geometry, material);
-  scene.add(mesh);
-
-  window.addEventListener('resize', onWindowResize);
-
-  document.body.addEventListener('click', () => {
-    if (flipping) return;
-    flipping = true;
-    targetCurl = targetCurl === 0 ? 0.5 : 0;
-  });
-}
-
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-  mesh.material.uniforms.curl.value += (targetCurl - mesh.material.uniforms.curl.value) * 0.08;
-  if (Math.abs(mesh.material.uniforms.curl.value - targetCurl) < 0.01) flipping = false;
-  renderer.render(scene, camera);
-}
+window.addEventListener("resize", () => {
+  flipbook.update();
+});
 </script>
 
 </body>
