@@ -2,387 +2,357 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>منيو المطعم - تقليب صفحات واقعي</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>منيو المطعم - تفاعلي</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-      overflow: hidden;
+      width: 100vw;
       height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      perspective: 2000px;
-    }
-
-    .book-container {
-      position: relative;
-      width: 90vw;
-      max-width: 1400px;
-      height: 90vh;
-      max-height: 900px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .book {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      transform-style: preserve-3d;
-      transition: transform 0.5s ease;
-    }
-
-    .page-wrapper {
-      position: absolute;
-      width: 50%;
-      height: 100%;
-      right: 0;
-      transform-origin: left center;
-      transform-style: preserve-3d;
-      transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
-      box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
-    }
-
-    .page-wrapper.flipped {
-      transform: rotateY(-180deg);
-    }
-
-    .page {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      background: white;
       overflow: hidden;
+      background: #2c3e50;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      perspective: 1500px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    .page img {
+    .menu-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      transform-style: preserve-3d;
+    }
+
+    .menu-page {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform-origin: center center;
+      transition: transform 0.1s ease-out;
+      cursor: grab;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .menu-page:active {
+      cursor: grabbing;
+    }
+
+    .menu-page img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      pointer-events: none;
     }
 
-    .page-front {
-      transform: rotateY(0deg);
+    /* تأثير الانحناء */
+    .menu-page.bending {
+      filter: brightness(0.95);
     }
 
-    .page-back {
-      transform: rotateY(180deg);
-    }
-
-    /* الغلاف */
-    .cover {
+    /* تأثير الظل الديناميكي */
+    .menu-page::before {
+      content: '';
       position: absolute;
-      width: 50%;
-      height: 100%;
+      top: 0;
       left: 0;
-      background: linear-gradient(135deg, #8B4513 0%, #654321 100%);
-      box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: #FFD700;
-      text-align: center;
-      padding: 40px;
-      border: 3px solid #FFD700;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 0, 0, 0.1) 50%,
+        rgba(0, 0, 0, 0) 100%
+      );
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
     }
 
-    .cover h1 {
-      font-size: 3.5rem;
-      margin-bottom: 20px;
-      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
-      font-weight: bold;
+    .menu-page.bending::before {
+      opacity: 1;
     }
 
-    .cover p {
-      font-size: 1.5rem;
-      margin-top: 10px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    }
-
-    .cover .ornament {
-      font-size: 4rem;
-      margin: 20px 0;
-    }
-
-    /* أزرار التحكم */
-    .controls {
+    /* مؤشر بصري خفيف للسحب */
+    .drag-hint {
       position: absolute;
       bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
-      display: flex;
-      gap: 20px;
-      z-index: 1000;
-    }
-
-    .btn {
-      background: rgba(255, 255, 255, 0.9);
-      border: none;
-      padding: 15px 30px;
-      font-size: 1.2rem;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      font-weight: bold;
-      color: #1e3c72;
-    }
-
-    .btn:hover {
-      background: white;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    .btn:active {
-      transform: translateY(-1px);
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    /* مؤشر الصفحة */
-    .page-indicator {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.9);
-      padding: 10px 25px;
-      border-radius: 30px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: #1e3c72;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      z-index: 1000;
-    }
-
-    /* تأثيرات الظل */
-    .shadow {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to right, rgba(0, 0, 0, 0.3), transparent);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      text-align: center;
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      animation: fadeInOut 3s ease-in-out infinite;
       pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.5s ease;
+      z-index: 1000;
     }
 
-    .page-wrapper.flipping .shadow {
-      opacity: 1;
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
     }
 
-    /* استجابة للشاشات الصغيرة */
-    @media (max-width: 768px) {
-      .cover h1 {
-        font-size: 2rem;
-      }
-      
-      .cover p {
-        font-size: 1rem;
-      }
-      
-      .btn {
-        padding: 12px 20px;
-        font-size: 1rem;
-      }
-      
-      .page-indicator {
-        font-size: 0.9rem;
-        padding: 8px 20px;
-      }
+    .drag-hint.hidden {
+      display: none;
     }
 
-    /* تأثير النقر */
-    .clickable-area {
+    /* تأثير التموج عند النقر */
+    .ripple {
       position: absolute;
-      width: 50%;
-      height: 100%;
-      cursor: pointer;
-      z-index: 100;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(0);
+      animation: ripple-animation 0.6s ease-out;
+      pointer-events: none;
     }
 
-    .clickable-area.left {
-      left: 0;
-    }
-
-    .clickable-area.right {
-      right: 0;
-    }
-
-    .clickable-area:hover {
-      background: rgba(255, 255, 255, 0.05);
+    @keyframes ripple-animation {
+      to {
+        transform: scale(4);
+        opacity: 0;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="page-indicator">
-    <span id="currentPage">1</span> / <span id="totalPages">8</span>
+  <div class="menu-container">
+    <div class="menu-page" id="menuPage">
+      <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&h=1080&fit=crop&q=90" alt="منيو المطعم">
+    </div>
   </div>
 
-  <div class="book-container">
-    <!-- الغلاف الأيسر -->
-    <div class="cover">
-      <div class="ornament">🍽️</div>
-      <h1>منيو المطعم</h1>
-      <p>أشهى الأطباق</p>
-      <p>وألذ المأكولات</p>
-      <div class="ornament">✨</div>
-    </div>
-
-    <!-- الكتاب -->
-    <div class="book" id="book">
-      <!-- الصفحات ستضاف هنا ديناميكياً -->
-    </div>
-
-    <!-- مناطق النقر -->
-    <div class="clickable-area left" onclick="prevPage()"></div>
-    <div class="clickable-area right" onclick="nextPage()"></div>
-  </div>
-
-  <div class="controls">
-    <button class="btn" id="prevBtn" onclick="prevPage()">⟵ السابق</button>
-    <button class="btn" id="nextBtn" onclick="nextPage()">التالي ⟶</button>
+  <div class="drag-hint" id="dragHint">
+    اسحب أو حرك الصورة للتفاعل
   </div>
 
   <script>
-    // صور المنيو (يمكنك استبدالها بصور حقيقية)
-    const menuPages = [
-      {
-        front: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=800&fit=crop',
-        back: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200&h=800&fit=crop'
-      },
-      {
-        front: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1200&h=800&fit=crop',
-        back: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1200&h=800&fit=crop'
-      },
-      {
-        front: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&h=800&fit=crop',
-        back: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=1200&h=800&fit=crop'
-      },
-      {
-        front: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=1200&h=800&fit=crop',
-        back: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=1200&h=800&fit=crop'
+    const menuPage = document.getElementById('menuPage');
+    const dragHint = document.getElementById('dragHint');
+    
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let currentX = 0;
+    let currentY = 0;
+    let rotateX = 0;
+    let rotateY = 0;
+    let velocityX = 0;
+    let velocityY = 0;
+    
+    // إخفاء المؤشر بعد أول تفاعل
+    let hasInteracted = false;
+
+    // تأثير التموج عند النقر
+    function createRipple(e) {
+      const ripple = document.createElement('div');
+      ripple.className = 'ripple';
+      
+      const rect = menuPage.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      ripple.style.width = '20px';
+      ripple.style.height = '20px';
+      
+      menuPage.appendChild(ripple);
+      
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
+    }
+
+    // بداية السحب - الماوس
+    menuPage.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      menuPage.classList.add('bending');
+      createRipple(e);
+      
+      if (!hasInteracted) {
+        hasInteracted = true;
+        dragHint.classList.add('hidden');
       }
-    ];
+    });
 
-    let currentPageIndex = 0;
-    const book = document.getElementById('book');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const currentPageSpan = document.getElementById('currentPage');
-    const totalPagesSpan = document.getElementById('totalPages');
+    // بداية السحب - اللمس
+    menuPage.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      menuPage.classList.add('bending');
+      
+      if (!hasInteracted) {
+        hasInteracted = true;
+        dragHint.classList.add('hidden');
+      }
+    }, { passive: true });
 
-    // إنشاء الصفحات
-    function createPages() {
-      menuPages.forEach((page, index) => {
-        const pageWrapper = document.createElement('div');
-        pageWrapper.className = 'page-wrapper';
-        pageWrapper.style.zIndex = menuPages.length - index;
+    // أثناء السحب - الماوس
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      
+      currentX = e.clientX - startX;
+      currentY = e.clientY - startY;
+      
+      // حساب الدوران بناءً على الحركة
+      rotateY = (currentX / window.innerWidth) * 30; // دوران أفقي
+      rotateX = -(currentY / window.innerHeight) * 30; // دوران عمودي
+      
+      // تطبيق التحويل مع تأثير الانحناء
+      const scale = 1 - Math.abs(currentX / window.innerWidth) * 0.1;
+      menuPage.style.transform = `
+        perspective(1500px)
+        rotateX(${rotateX}deg)
+        rotateY(${rotateY}deg)
+        scale(${scale})
+      `;
+      
+      velocityX = currentX;
+      velocityY = currentY;
+    });
+
+    // أثناء السحب - اللمس
+    document.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      
+      const touch = e.touches[0];
+      currentX = touch.clientX - startX;
+      currentY = touch.clientY - startY;
+      
+      rotateY = (currentX / window.innerWidth) * 30;
+      rotateX = -(currentY / window.innerHeight) * 30;
+      
+      const scale = 1 - Math.abs(currentX / window.innerWidth) * 0.1;
+      menuPage.style.transform = `
+        perspective(1500px)
+        rotateX(${rotateX}deg)
+        rotateY(${rotateY}deg)
+        scale(${scale})
+      `;
+      
+      velocityX = currentX;
+      velocityY = currentY;
+    }, { passive: true });
+
+    // نهاية السحب - الماوس
+    document.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      menuPage.classList.remove('bending');
+      
+      // تأثير الارتداد
+      animateReturn();
+    });
+
+    // نهاية السحب - اللمس
+    document.addEventListener('touchend', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      menuPage.classList.remove('bending');
+      
+      animateReturn();
+    });
+
+    // تحريك الصفحة للعودة للوضع الطبيعي مع تأثير فيزيائي
+    function animateReturn() {
+      let currentRotateX = rotateX;
+      let currentRotateY = rotateY;
+      let currentScale = 1 - Math.abs(velocityX / window.innerWidth) * 0.1;
+      
+      const animate = () => {
+        // تقليل السرعة تدريجياً (تأثير الاحتكاك)
+        currentRotateX *= 0.9;
+        currentRotateY *= 0.9;
+        currentScale += (1 - currentScale) * 0.1;
         
-        pageWrapper.innerHTML = `
-          <div class="page page-front">
-            <img src="${page.front}" alt="صفحة منيو ${index * 2 + 1}">
-          </div>
-          <div class="page page-back">
-            <img src="${page.back}" alt="صفحة منيو ${index * 2 + 2}">
-          </div>
-          <div class="shadow"></div>
+        menuPage.style.transform = `
+          perspective(1500px)
+          rotateX(${currentRotateX}deg)
+          rotateY(${currentRotateY}deg)
+          scale(${currentScale})
         `;
         
-        book.appendChild(pageWrapper);
-      });
+        // استمر في الحركة حتى تصبح قريبة من الصفر
+        if (Math.abs(currentRotateX) > 0.1 || Math.abs(currentRotateY) > 0.1 || Math.abs(currentScale - 1) > 0.01) {
+          requestAnimationFrame(animate);
+        } else {
+          // العودة للوضع الطبيعي تماماً
+          menuPage.style.transform = 'perspective(1500px) rotateX(0deg) rotateY(0deg) scale(1)';
+        }
+      };
       
-      totalPagesSpan.textContent = menuPages.length * 2;
+      animate();
     }
 
-    // الانتقال للصفحة التالية
-    function nextPage() {
-      if (currentPageIndex < menuPages.length) {
-        const pages = document.querySelectorAll('.page-wrapper');
-        pages[currentPageIndex].classList.add('flipped', 'flipping');
+    // تأثير الحركة التلقائية الخفيفة (تنفس)
+    let breatheAngle = 0;
+    function breatheEffect() {
+      if (!isDragging) {
+        breatheAngle += 0.01;
+        const breatheX = Math.sin(breatheAngle) * 2;
+        const breatheY = Math.cos(breatheAngle * 0.7) * 2;
         
-        setTimeout(() => {
-          pages[currentPageIndex].classList.remove('flipping');
-        }, 1200);
-        
-        currentPageIndex++;
-        updateControls();
+        if (Math.abs(rotateX) < 0.5 && Math.abs(rotateY) < 0.5) {
+          menuPage.style.transform = `
+            perspective(1500px)
+            rotateX(${breatheX}deg)
+            rotateY(${breatheY}deg)
+            scale(1)
+          `;
+        }
       }
+      requestAnimationFrame(breatheEffect);
     }
+    
+    breatheEffect();
 
-    // الانتقال للصفحة السابقة
-    function prevPage() {
-      if (currentPageIndex > 0) {
-        currentPageIndex--;
-        const pages = document.querySelectorAll('.page-wrapper');
-        pages[currentPageIndex].classList.remove('flipped');
-        pages[currentPageIndex].classList.add('flipping');
-        
-        setTimeout(() => {
-          pages[currentPageIndex].classList.remove('flipping');
-        }, 1200);
-        
-        updateControls();
-      }
-    }
+    // تأثير الحركة بناءً على حركة الماوس (parallax خفيف)
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) return;
+      
+      const mouseX = (e.clientX / window.innerWidth - 0.5) * 10;
+      const mouseY = (e.clientY / window.innerHeight - 0.5) * 10;
+      
+      menuPage.style.transform = `
+        perspective(1500px)
+        rotateX(${-mouseY}deg)
+        rotateY(${mouseX}deg)
+        scale(1)
+      `;
+    });
 
-    // تحديث حالة الأزرار ومؤشر الصفحة
-    function updateControls() {
-      prevBtn.disabled = currentPageIndex === 0;
-      nextBtn.disabled = currentPageIndex === menuPages.length;
-      currentPageSpan.textContent = currentPageIndex * 2 + 1;
-    }
-
-    // دعم لوحة المفاتيح
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        prevPage();
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        nextPage();
+    // إعادة تعيين عند مغادرة الماوس
+    document.addEventListener('mouseleave', () => {
+      if (!isDragging) {
+        menuPage.style.transform = 'perspective(1500px) rotateX(0deg) rotateY(0deg) scale(1)';
       }
     });
 
-    // دعم السحب (Swipe) للأجهزة اللمسية
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    document.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
+    // منع السحب الافتراضي للصور
+    menuPage.addEventListener('dragstart', (e) => {
+      e.preventDefault();
     });
-
-    document.addEventListener('touchend', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      handleSwipe();
-    });
-
-    function handleSwipe() {
-      if (touchEndX < touchStartX - 50) {
-        nextPage();
-      }
-      if (touchEndX > touchStartX + 50) {
-        prevPage();
-      }
-    }
-
-    // تهيئة التطبيق
-    createPages();
-    updateControls();
   </script>
 
 </body>
