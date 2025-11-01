@@ -71,9 +71,61 @@
       user-drag: none;
       pointer-events: none;
     }
+
+    /* علامة الإرشاد */
+    .swipe-hint {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      animation: swipeHintAnimation 3s ease-in-out forwards;
+    }
+
+    .swipe-hint svg {
+      width: 80px;
+      height: 80px;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+    }
+
+    @keyframes swipeHintAnimation {
+      0% {
+        opacity: 0;
+        left: 50%;
+      }
+      10% {
+        opacity: 0.6;
+      }
+      40% {
+        opacity: 0.6;
+        left: 50%;
+      }
+      70% {
+        opacity: 0.6;
+        left: 30%;
+      }
+      90% {
+        opacity: 0.3;
+        left: 30%;
+      }
+      100% {
+        opacity: 0;
+        left: 30%;
+      }
+    }
   </style>
 </head>
 <body>
+
+  <!-- علامة الإرشاد -->
+  <div class="swipe-hint">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13 5.5C13 4.67157 12.3284 4 11.5 4C10.6716 4 10 4.67157 10 5.5V12H9C7.89543 12 7 12.8954 7 14C7 14.5523 7.44772 15 8 15H9V19C9 20.1046 9.89543 21 11 21H16C17.1046 21 18 20.1046 18 19V14C18 12.8954 17.1046 12 16 12H15V5.5C15 4.67157 14.3284 4 13.5 4C12.6716 4 12 4.67157 12 5.5V12H13V5.5Z" fill="white" opacity="0.8"/>
+      <path d="M4 12L8 8M4 12L8 16M4 12H12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+    </svg>
+  </div>
 
   <!-- حاوية الكتاب -->
   <div class="book-container">
@@ -148,9 +200,9 @@
       }
     }, { passive: false });
 
-    // حساب حجم الكتاب ليملأ الشاشة
-    const bookWidth = window.innerWidth > 768 ? window.innerWidth * 0.45 : window.innerWidth * 0.9;
-    const bookHeight = window.innerHeight * 0.95;
+    // حساب حجم الكتاب ليملأ الشاشة - صفحة واحدة كاملة
+    const bookWidth = window.innerWidth;
+    const bookHeight = window.innerHeight;
 
     // إعداد الكتاب
     const pageFlipBook = new St.PageFlip(document.getElementById('book'), {
@@ -184,8 +236,8 @@
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        const newWidth = window.innerWidth > 768 ? window.innerWidth * 0.45 : window.innerWidth * 0.9;
-        const newHeight = window.innerHeight * 0.95;
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
         
         pageFlipBook.updateState({
           width: newWidth,
@@ -193,6 +245,14 @@
         });
       }, 250);
     });
+
+    // إخفاء علامة الإرشاد بعد 3 ثوانٍ
+    setTimeout(() => {
+      const hint = document.querySelector('.swipe-hint');
+      if (hint) {
+        hint.style.display = 'none';
+      }
+    }, 3000);
 
     // منع السحب الافتراضي للصور
     document.querySelectorAll('img').forEach(img => {
