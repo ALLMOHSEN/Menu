@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-  <title>منيو المطعم</title>
+  <title>معرض الصور</title>
   
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      touch-action: pan-y;
       -webkit-user-select: none;
       user-select: none;
+      -webkit-touch-callout: none;
     }
 
     html, body {
@@ -21,11 +21,11 @@
       overflow: hidden;
       position: fixed;
       overscroll-behavior: none;
+      touch-action: pan-y;
     }
 
     body {
-      background: #1a1a1a;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #000;
     }
 
     .container {
@@ -35,206 +35,65 @@
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
     }
 
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 20px;
-      text-align: center;
-      color: white;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .header h1 {
-      font-size: 28px;
-      margin-bottom: 5px;
-    }
-
-    .header p {
-      font-size: 14px;
-      opacity: 0.9;
-    }
-
-    .menu-gallery {
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .menu-item {
-      background: #2a2a2a;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.4);
-      transition: transform 0.3s ease;
-    }
-
-    .menu-item:active {
-      transform: scale(0.98);
-    }
-
-    .menu-image {
+    .image-item {
       width: 100%;
-      height: 400px;
-      object-fit: cover;
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+    }
+
+    .image-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
       display: block;
       pointer-events: none;
-    }
-
-    .menu-info {
-      padding: 15px;
-      color: white;
-    }
-
-    .menu-info h2 {
-      font-size: 20px;
-      margin-bottom: 8px;
-      color: #667eea;
-    }
-
-    .menu-info p {
-      font-size: 14px;
-      color: #ccc;
-      line-height: 1.5;
-    }
-
-    .scroll-indicator {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(102, 126, 234, 0.9);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 25px;
-      font-size: 14px;
-      animation: bounce 2s infinite;
-      pointer-events: none;
-      z-index: 50;
-    }
-
-    @keyframes bounce {
-      0%, 20%, 50%, 80%, 100% {
-        transform: translateX(-50%) translateY(0);
-      }
-      40% {
-        transform: translateX(-50%) translateY(-10px);
-      }
-      60% {
-        transform: translateX(-50%) translateY(-5px);
-      }
-    }
-
-    .scroll-indicator.hidden {
-      display: none;
-    }
-
-    /* منع التقريب والتبعيد */
-    img {
-      pointer-events: none;
+      -webkit-user-drag: none;
+      user-drag: none;
+      -webkit-touch-callout: none;
     }
   </style>
 </head>
 <body>
 
-  <div class="container" id="container">
-    <div class="header">
-      <h1>🍽️ منيو المطعم</h1>
-      <p>اسحب لأسفل لمشاهدة جميع الأطباق</p>
+  <div class="container">
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1200&h=1600&fit=crop&q=90" alt="">
     </div>
 
-    <div class="menu-gallery">
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop&q=90" alt="سلطة طازجة" class="menu-image">
-        <div class="menu-info">
-          <h2>سلطة طازجة</h2>
-          <p>سلطة خضراء طازجة مع صلصة خاصة وخضروات موسمية</p>
-        </div>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=600&fit=crop&q=90" alt="بيتزا إيطالية" class="menu-image">
-        <div class="menu-info">
-          <h2>بيتزا إيطالية</h2>
-          <p>بيتزا مخبوزة في الفرن مع جبنة موتزاريلا طازجة وصلصة طماطم</p>
-        </div>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=600&fit=crop&q=90" alt="طبق رئيسي" class="menu-image">
-        <div class="menu-info">
-          <h2>طبق رئيسي مميز</h2>
-          <p>طبق شهي مع خضروات مشوية ونكهات عالمية</p>
-        </div>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=600&fit=crop&q=90" alt="برجر لذيذ" class="menu-image">
-        <div class="menu-info">
-          <h2>برجر لذيذ</h2>
-          <p>برجر طازج مع لحم بقري مشوي وخضروات وصلصة خاصة</p>
-        </div>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&h=600&fit=crop&q=90" alt="حساء ساخن" class="menu-image">
-        <div class="menu-info">
-          <h2>حساء ساخن</h2>
-          <p>حساء كريمي دافئ مع خبز محمص وأعشاب طازجة</p>
-        </div>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=800&h=600&fit=crop&q=90" alt="معكرونة إيطالية" class="menu-image">
-        <div class="menu-info">
-          <h2>معكرونة إيطالية</h2>
-          <p>معكرونة طازجة مع صلصة كريمية وجبنة بارميزان</p>
-        </div>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&h=600&fit=crop&q=90" alt="حلى شهي" class="menu-image">
-        <div class="menu-info">
-          <h2>حلى شهي</h2>
-          <p>حلى لذيذ مع كريمة طازجة وفواكه موسمية</p>
-        </div>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop&q=90" alt="مشروبات منعشة" class="menu-image">
-        <div class="menu-info">
-          <h2>مشروبات منعشة</h2>
-          <p>مجموعة متنوعة من المشروبات الباردة والساخنة</p>
-        </div>
-      </div>
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200&h=1600&fit=crop&q=90" alt="">
     </div>
-  </div>
 
-  <div class="scroll-indicator" id="scrollIndicator">
-    ⬇️ اسحب للأسفل
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
   </div>
 
   <script>
-    // إخفاء مؤشر السحب بعد التمرير
-    const container = document.getElementById('container');
-    const scrollIndicator = document.getElementById('scrollIndicator');
-    
-    let scrollTimeout;
-    container.addEventListener('scroll', function() {
-      scrollIndicator.classList.add('hidden');
-      
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        if (container.scrollTop === 0) {
-          scrollIndicator.classList.remove('hidden');
-        }
-      }, 3000);
-    });
-
     // منع التقريب والتبعيد بشكل كامل
     document.addEventListener('gesturestart', function(e) {
       e.preventDefault();
@@ -261,6 +120,22 @@
     // منع التقريب بالعجلة (للأجهزة التي تدعم ذلك)
     document.addEventListener('wheel', function(e) {
       if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // منع السحب الأفقي
+    let startX = 0;
+    document.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function(e) {
+      const moveX = e.touches[0].clientX;
+      const diffX = Math.abs(moveX - startX);
+      
+      // إذا كان السحب أفقياً، منعه
+      if (diffX > 10) {
         e.preventDefault();
       }
     }, { passive: false });
