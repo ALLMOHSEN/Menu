@@ -3,20 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-  <title>منيو المطعم - تقليب الصفحات</title>
-  
-  <!-- مكتبة StPageFlip -->
-  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+  <title>صورة ملء الشاشة</title>
   
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      -webkit-user-select: none;
-      user-select: none;
-      touch-action: pan-x pan-y;
-      -webkit-touch-callout: none;
     }
 
     html, body {
@@ -24,279 +17,26 @@
       height: 100%;
       overflow: hidden;
       position: fixed;
-      -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-      touch-action: manipulation;
-      background: #000;
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
-    }
-
-    .book-container {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      height: 100%;
-      touch-action: none;
-    }
-
-    #book {
-      margin: auto;
-      touch-action: pan-x;
-    }
-
-    .page {
       background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      -webkit-user-drag: none;
-      user-drag: none;
     }
 
-    .page img {
-      width: 100%;
-      height: 100%;
+    .fullscreen-image {
+      width: 100vw;
+      height: 100vh;
       object-fit: cover;
       display: block;
-      -webkit-user-drag: none;
-      user-drag: none;
-      pointer-events: none;
-    }
-
-    /* علامة الإرشاد */
-    .swipe-hint {
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1000;
-      pointer-events: none;
-      opacity: 0;
-      animation: swipeHintAnimation 4s ease-in-out forwards;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .swipe-hint-icon {
-      width: 100px;
-      height: 100px;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-      animation: pulseIcon 2s ease-in-out infinite;
-    }
-
-    .swipe-hint-icon svg {
-      width: 50px;
-      height: 50px;
-    }
-
-    .swipe-hint-text {
-      color: white;
-      font-size: 18px;
-      font-weight: 600;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-      background: rgba(0, 0, 0, 0.5);
-      padding: 8px 20px;
-      border-radius: 20px;
-    }
-
-    @keyframes swipeHintAnimation {
-      0% {
-        opacity: 0;
-        left: 50%;
-      }
-      15% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 1;
-        left: 50%;
-      }
-      75% {
-        opacity: 1;
-        left: 30%;
-      }
-      90% {
-        opacity: 0.5;
-        left: 30%;
-      }
-      100% {
-        opacity: 0;
-        left: 30%;
-      }
-    }
-
-    @keyframes pulseIcon {
-      0%, 100% {
-        transform: scale(1);
-      }
-      50% {
-        transform: scale(1.1);
-      }
     }
   </style>
 </head>
 <body>
 
-  <!-- علامة الإرشاد -->
-  <div class="swipe-hint">
-    <div class="swipe-hint-icon">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 18L9 12L15 6" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <div class="swipe-hint-text">اسحب لتقليب الصفحة</div>
-  </div>
-
-  <!-- حاوية الكتاب -->
-  <div class="book-container">
-    <div id="book">
-      <!-- الصفحة 1 -->
-      <div class="page">
-        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&h=2400&fit=crop&q=90" alt="طعام">
-      </div>
-
-      <!-- الصفحة 2 -->
-      <div class="page">
-        <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1600&h=2400&fit=crop&q=90" alt="برجر">
-      </div>
-
-      <!-- الصفحة 3 -->
-      <div class="page">
-        <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=1600&h=2400&fit=crop&q=90" alt="حلويات">
-      </div>
-
-      <!-- الصفحة 4 -->
-      <div class="page">
-        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&h=2400&fit=crop&q=90" alt="بيتزا">
-      </div>
-
-      <!-- الصفحة 5 -->
-      <div class="page">
-        <img src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1600&h=2400&fit=crop&q=90" alt="طعام">
-      </div>
-
-      <!-- الصفحة 6 -->
-      <div class="page">
-        <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1600&h=2400&fit=crop&q=90" alt="سلطة">
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // منع التقريب بالضغط المزدوج
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function(event) {
-      const now = Date.now();
-      if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
-      }
-      lastTouchEnd = now;
-    }, false);
-
-    // منع التقريب بالإيماءات
-    document.addEventListener('gesturestart', function(e) {
-      e.preventDefault();
-    });
-
-    document.addEventListener('gesturechange', function(e) {
-      e.preventDefault();
-    });
-
-    document.addEventListener('gestureend', function(e) {
-      e.preventDefault();
-    });
-
-    // منع التقريب بالعجلة + Ctrl
-    document.addEventListener('wheel', function(e) {
-      if (e.ctrlKey) {
-        e.preventDefault();
-      }
-    }, { passive: false });
-
-    // منع السحب للصفحة بأكملها
-    document.addEventListener('touchmove', function(e) {
-      if (e.scale !== 1) {
-        e.preventDefault();
-      }
-    }, { passive: false });
-
-    // حساب حجم الكتاب ليملأ الشاشة - صفحة واحدة كاملة
-    const bookWidth = window.innerWidth;
-    const bookHeight = window.innerHeight;
-
-    // إعداد الكتاب
-    const pageFlipBook = new St.PageFlip(document.getElementById('book'), {
-      width: bookWidth,
-      height: bookHeight,
-      size: 'stretch',
-      minWidth: 200,
-      maxWidth: 2000,
-      minHeight: 300,
-      maxHeight: 2000,
-      maxShadowOpacity: 0.5,
-      showCover: false,
-      mobileScrollSupport: false,
-      swipeDistance: 20,
-      clickEventForward: true,
-      usePortrait: true,
-      startPage: 0,
-      drawShadow: true,
-      flippingTime: 800,
-      useMouseEvents: true,
-      autoSize: true,
-      showPageCorners: true,
-      disableFlipByClick: false
-    });
-
-    // تحميل الصفحات
-    pageFlipBook.loadFromHTML(document.querySelectorAll('.page'));
-
-    // إعادة تحجيم عند تغيير حجم النافذة
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        const newWidth = window.innerWidth;
-        const newHeight = window.innerHeight;
-        
-        pageFlipBook.updateState({
-          width: newWidth,
-          height: newHeight
-        });
-      }, 250);
-    });
-
-    // إخفاء علامة الإرشاد بعد 3 ثوانٍ
-    setTimeout(() => {
-      const hint = document.querySelector('.swipe-hint');
-      if (hint) {
-        hint.style.display = 'none';
-      }
-    }, 3000);
-
-    // منع السحب الافتراضي للصور
-    document.querySelectorAll('img').forEach(img => {
-      img.addEventListener('dragstart', (e) => {
-        e.preventDefault();
-      });
-    });
-  </script>
+  <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&h=1080&fit=crop&q=90" alt="صورة ملء الشاشة" class="fullscreen-image">
 
 </body>
 </html>
