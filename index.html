@@ -1,37 +1,67 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>منيو مطعم - ورقة قلب 3D</title>
-
-  <!-- مكتبة PageFlip -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/css/page-flip.css">
-  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>منيو المطعم - تقليب صفحات واقعي</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      background: #111;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    #book {
-      width: 100vw;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      overflow: hidden;
       height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 2000px;
+    }
+
+    .book-container {
       position: relative;
+      width: 90vw;
+      max-width: 1400px;
+      height: 90vh;
+      max-height: 900px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .book {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease;
+    }
+
+    .page-wrapper {
+      position: absolute;
+      width: 50%;
+      height: 100%;
+      right: 0;
+      transform-origin: left center;
+      transform-style: preserve-3d;
+      transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+      box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .page-wrapper.flipped {
+      transform: rotateY(-180deg);
     }
 
     .page {
+      position: absolute;
       width: 100%;
       height: 100%;
+      backface-visibility: hidden;
       background: white;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       overflow: hidden;
     }
 
@@ -39,102 +69,320 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
 
-    .back-side {
-      background: #f0f0f0;
-      color: #333;
-      font-size: 24px;
+    .page-front {
+      transform: rotateY(0deg);
+    }
+
+    .page-back {
+      transform: rotateY(180deg);
+    }
+
+    /* الغلاف */
+    .cover {
+      position: absolute;
+      width: 50%;
+      height: 100%;
+      left: 0;
+      background: linear-gradient(135deg, #8B4513 0%, #654321 100%);
+      box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #FFD700;
       text-align: center;
-      padding: 20px;
+      padding: 40px;
+      border: 3px solid #FFD700;
     }
 
-    /* زر الرجوع (اختياري) */
-    .back-btn {
+    .cover h1 {
+      font-size: 3.5rem;
+      margin-bottom: 20px;
+      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+      font-weight: bold;
+    }
+
+    .cover p {
+      font-size: 1.5rem;
+      margin-top: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .cover .ornament {
+      font-size: 4rem;
+      margin: 20px 0;
+    }
+
+    /* أزرار التحكم */
+    .controls {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      z-index: 1000;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      font-weight: bold;
+      color: #1e3c72;
+    }
+
+    .btn:hover {
+      background: white;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* مؤشر الصفحة */
+    .page-indicator {
       position: absolute;
       top: 20px;
-      left: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px 25px;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #1e3c72;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
       z-index: 1000;
-      background: rgba(0,0,0,0.5);
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 50%;
+    }
+
+    /* تأثيرات الظل */
+    .shadow {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, rgba(0, 0, 0, 0.3), transparent);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .page-wrapper.flipping .shadow {
+      opacity: 1;
+    }
+
+    /* استجابة للشاشات الصغيرة */
+    @media (max-width: 768px) {
+      .cover h1 {
+        font-size: 2rem;
+      }
+      
+      .cover p {
+        font-size: 1rem;
+      }
+      
+      .btn {
+        padding: 12px 20px;
+        font-size: 1rem;
+      }
+      
+      .page-indicator {
+        font-size: 0.9rem;
+        padding: 8px 20px;
+      }
+    }
+
+    /* تأثير النقر */
+    .clickable-area {
+      position: absolute;
+      width: 50%;
+      height: 100%;
       cursor: pointer;
-      font-size: 18px;
+      z-index: 100;
+    }
+
+    .clickable-area.left {
+      left: 0;
+    }
+
+    .clickable-area.right {
+      right: 0;
+    }
+
+    .clickable-area:hover {
+      background: rgba(255, 255, 255, 0.05);
     }
   </style>
 </head>
 <body>
 
-  <!-- زر للرجوع (اختياري) -->
-  <button class="back-btn" onclick="flipBack()">↶</button>
+  <div class="page-indicator">
+    <span id="currentPage">1</span> / <span id="totalPages">8</span>
+  </div>
 
-  <div id="book">
-    <!-- الوجه الأمامي (المنيو) -->
-    <div class="page" data-density="hard">
-      <img src="https://picsum.photos/id/1015/1200/800" alt="منيو المطعم">
+  <div class="book-container">
+    <!-- الغلاف الأيسر -->
+    <div class="cover">
+      <div class="ornament">🍽️</div>
+      <h1>منيو المطعم</h1>
+      <p>أشهى الأطباق</p>
+      <p>وألذ المأكولات</p>
+      <div class="ornament">✨</div>
     </div>
 
-    <!-- الوجه الخلفي (يمكن أن يكون فارغًا أو معلومات إضافية) -->
-    <div class="page back-side" data-density="hard">
-      <div>
-        <h2>شكراً لزيارتكم</h2>
-        <p>مطعم قلب ورق</p>
-        <p>📞 123-456-789</p>
-      </div>
+    <!-- الكتاب -->
+    <div class="book" id="book">
+      <!-- الصفحات ستضاف هنا ديناميكياً -->
     </div>
+
+    <!-- مناطق النقر -->
+    <div class="clickable-area left" onclick="prevPage()"></div>
+    <div class="clickable-area right" onclick="nextPage()"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="prevBtn" onclick="prevPage()">⟵ السابق</button>
+    <button class="btn" id="nextBtn" onclick="nextPage()">التالي ⟶</button>
   </div>
 
   <script>
-    let pageFlip;
+    // صور المنيو (يمكنك استبدالها بصور حقيقية)
+    const menuPages = [
+      {
+        front: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=800&fit=crop',
+        back: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200&h=800&fit=crop'
+      },
+      {
+        front: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1200&h=800&fit=crop',
+        back: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1200&h=800&fit=crop'
+      },
+      {
+        front: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&h=800&fit=crop',
+        back: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=1200&h=800&fit=crop'
+      },
+      {
+        front: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=1200&h=800&fit=crop',
+        back: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=1200&h=800&fit=crop'
+      }
+    ];
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const book = document.getElementById("book");
+    let currentPageIndex = 0;
+    const book = document.getElementById('book');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const currentPageSpan = document.getElementById('currentPage');
+    const totalPagesSpan = document.getElementById('totalPages');
 
-      pageFlip = new St.PageFlip(book, {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        size: "stretch",
-        minWidth: 300,
-        minHeight: 400,
-        maxShadowOpacity: 0.6,
-        showCover: true,           // نعم، نريد غلافًا (الورقة الأولى)
-        mobileScrollSupport: false,
-        usePortrait: true,
-        drawShadow: true,
-        flippingTime: 1000,
-        startZIndex: 0,
-        autoSize: true,
-        maxWidth: 1000,
-        maxHeight: 1400
+    // إنشاء الصفحات
+    function createPages() {
+      menuPages.forEach((page, index) => {
+        const pageWrapper = document.createElement('div');
+        pageWrapper.className = 'page-wrapper';
+        pageWrapper.style.zIndex = menuPages.length - index;
+        
+        pageWrapper.innerHTML = `
+          <div class="page page-front">
+            <img src="${page.front}" alt="صفحة منيو ${index * 2 + 1}">
+          </div>
+          <div class="page page-back">
+            <img src="${page.back}" alt="صفحة منيو ${index * 2 + 2}">
+          </div>
+          <div class="shadow"></div>
+        `;
+        
+        book.appendChild(pageWrapper);
       });
+      
+      totalPagesSpan.textContent = menuPages.length * 2;
+    }
 
-      // تحميل الصفحات من HTML
-      pageFlip.loadFromHTML(book.querySelectorAll(".page"));
-
-      // تحديث الأبعاد عند تغيير حجم الشاشة
-      window.addEventListener("resize", () => {
-        pageFlip.update({
-          width: window.innerWidth,
-          height: window.innerHeight
-        });
-      });
-    });
-
-    // دالة للرجوع (قلب الصفحة للخلف)
-    function flipBack() {
-      if (pageFlip.getPageCount() > 0 && pageFlip.getCurrentPageIndex() > 0) {
-        pageFlip.flipPrev();
+    // الانتقال للصفحة التالية
+    function nextPage() {
+      if (currentPageIndex < menuPages.length) {
+        const pages = document.querySelectorAll('.page-wrapper');
+        pages[currentPageIndex].classList.add('flipped', 'flipping');
+        
+        setTimeout(() => {
+          pages[currentPageIndex].classList.remove('flipping');
+        }, 1200);
+        
+        currentPageIndex++;
+        updateControls();
       }
     }
 
-    // دعم النقر المزدوج أو السحب للقلب
-    document.addEventListener('dblclick', () => {
-      if (pageFlip.getCurrentPageIndex() === 0) {
-        pageFlip.flipNext();
+    // الانتقال للصفحة السابقة
+    function prevPage() {
+      if (currentPageIndex > 0) {
+        currentPageIndex--;
+        const pages = document.querySelectorAll('.page-wrapper');
+        pages[currentPageIndex].classList.remove('flipped');
+        pages[currentPageIndex].classList.add('flipping');
+        
+        setTimeout(() => {
+          pages[currentPageIndex].classList.remove('flipping');
+        }, 1200);
+        
+        updateControls();
+      }
+    }
+
+    // تحديث حالة الأزرار ومؤشر الصفحة
+    function updateControls() {
+      prevBtn.disabled = currentPageIndex === 0;
+      nextBtn.disabled = currentPageIndex === menuPages.length;
+      currentPageSpan.textContent = currentPageIndex * 2 + 1;
+    }
+
+    // دعم لوحة المفاتيح
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        prevPage();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        nextPage();
       }
     });
+
+    // دعم السحب (Swipe) للأجهزة اللمسية
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      if (touchEndX < touchStartX - 50) {
+        nextPage();
+      }
+      if (touchEndX > touchStartX + 50) {
+        prevPage();
+      }
+    }
+
+    // تهيئة التطبيق
+    createPages();
+    updateControls();
   </script>
 
 </body>
