@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <title>معرض الصور</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: fixed;
+      overscroll-behavior: none;
+      touch-action: pan-y;
+    }
+
+    body {
+      background: #000;
+    }
+
+    .container {
+      width: 100%;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+    }
+
+    .image-item {
+      width: 100%;
+      height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+    }
+
+    .image-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+      -webkit-user-drag: none;
+      user-drag: none;
+      -webkit-touch-callout: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="image-item">
+      <img src="M1.png" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+
+    <div class="image-item">
+      <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=1600&fit=crop&q=90" alt="">
+    </div>
+  </div>
+
+  <script>
+    // منع التقريب والتبعيد بشكل كامل
+    document.addEventListener('gesturestart', function(e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('gesturechange', function(e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('gestureend', function(e) {
+      e.preventDefault();
+    });
+
+    // منع التقريب بالضغط المزدوج
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
+
+    // منع التقريب بالعجلة (للأجهزة التي تدعم ذلك)
+    document.addEventListener('wheel', function(e) {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // منع السحب الأفقي
+    let startX = 0;
+    document.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function(e) {
+      const moveX = e.touches[0].clientX;
+      const diffX = Math.abs(moveX - startX);
+      
+      // إذا كان السحب أفقياً، منعه
+      if (diffX > 10) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
+
+</body>
+</html>
