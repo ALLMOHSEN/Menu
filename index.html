@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Class — القائمة الذهبية</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Tajawal:wght@300;400;500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-pale: #F5EDD6;
+    --black: #0A0A0A;
+    --dark: #141414;
+    --card: #1A1A1A;
+    --card2: #222222;
+    --text-muted: #888;
+    --text-body: #CCC;
+    --white: #FAFAFA;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Tajawal', 'Inter', sans-serif;
+    direction: rtl;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    text-align: center;
+    padding: 60px 24px 50px;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .crown-icon {
+    font-size: 2rem;
+    letter-spacing: 4px;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 16px;
+    animation: shimmer 3s infinite;
+  }
+
+  @keyframes shimmer {
+    0%,100% { opacity:1; }
+    50%      { opacity:0.6; }
+  }
+
+  .brand-name {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 700;
+    letter-spacing: 6px;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold), #A07820);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-transform: uppercase;
+  }
+
+  .brand-sub {
+    font-size: 0.75rem;
+    letter-spacing: 8px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-top: 6px;
+    opacity: 0.8;
+  }
+
+  .gold-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    margin: 24px auto;
+    max-width: 320px;
+  }
+
+  .gold-divider span { flex:1; height:1px; background: linear-gradient(to right, transparent, var(--gold), transparent); }
+  .gold-divider i { font-size: 0.6rem; color: var(--gold); }
+
+  /* ── EDIT BAR ── */
+  .edit-bar {
+    background: var(--card);
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .edit-bar button {
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--gold);
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .edit-bar button:hover {
+    background: rgba(201,168,76,0.2);
+    border-color: var(--gold);
+  }
+
+  .edit-bar button.danger {
+    color: #e05050;
+    border-color: rgba(224,80,80,0.3);
+    background: rgba(224,80,80,0.08);
+  }
+
+  .edit-bar button.danger:hover { background: rgba(224,80,80,0.18); border-color:#e05050; }
+
+  .edit-mode-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 8px;
+    padding: 36px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.8), 0 0 40px rgba(201,168,76,0.05);
+  }
+
+  .modal h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--gold);
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+  }
+
+  .modal label {
+    display: block;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+
+  .modal input, .modal textarea, .modal select {
+    width: 100%;
+    background: var(--dark);
+    border: 1px solid rgba(201,168,76,0.2);
+    color: var(--white);
+    padding: 12px 14px;
+    border-radius: 4px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .modal input:focus, .modal textarea:focus {
+    border-color: var(--gold);
+  }
+
+  .modal textarea { resize: vertical; min-height: 80px; }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .btn-gold {
+    flex:1;
+    background: linear-gradient(135deg, var(--gold), #A07820);
+    border: none;
+    color: var(--black);
+    padding: 12px;
+    border-radius: 4px;
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: opacity 0.2s;
+  }
+
+  .btn-gold:hover { opacity: 0.85; }
+
+  .btn-cancel {
+    flex:1;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text-muted);
+    padding: 12px;
+    border-radius: 4px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-cancel:hover { border-color: rgba(255,255,255,0.3); color: var(--white); }
+
+  /* ── NAV TABS ── */
+  .nav-wrap {
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 24px;
+    background: var(--dark);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-wrap::-webkit-scrollbar { display: none; }
+
+  .nav-tabs {
+    display: flex;
+    gap: 0;
+    min-width: max-content;
+    justify-content: center;
+  }
+
+  .nav-tab {
+    padding: 18px 28px;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: 'Tajawal', sans-serif;
+    position: relative;
+    transition: color 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav-tab::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%; right: 50%;
+    height: 1px;
+    background: var(--gold);
+    transition: all 0.3s;
+  }
+
+  .nav-tab.active { color: var(--gold); }
+  .nav-tab.active::after { left: 0; right: 0; }
+  .nav-tab:hover { color: var(--gold-light); }
+
+  /* ── MAIN CONTENT ── */
+  main { max-width: 960px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .section-eyebrow {
+    font-size: 0.7rem;
+    letter-spacing: 5px;
+    color: var(--gold);
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 600;
+    color: var(--white);
+    margin: 8px 0 14px;
+  }
+
+  .section-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* ── MENU GRID ── */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .menu-card {
+    background: var(--card);
+    border: 1px solid rgba(201,168,76,0.12);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.3s;
+    position: relative;
+    cursor: pointer;
+    group: true;
+  }
+
+  .menu-card:hover {
+    border-color: rgba(201,168,76,0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.06);
+  }
+
+  .menu-card.featured {
+    border-color: rgba(201,168,76,0.35);
+    background: linear-gradient(160deg, #1E1A0E 0%, var(--card) 100%);
+  }
+
+  .card-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.85);
+    transition: filter 0.3s;
+  }
+
+  .menu-card:hover .card-image { filter: brightness(1); }
+
+  .card-img-placeholder {
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(135deg, #1E1A0E 0%, #2A2010 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+  }
+
+  .card-body { padding: 22px 22px 20px; }
+
+  .card-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 3px 10px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+  }
+
+  .card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .card-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 18px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .card-price-sub {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-icon {
+    width: 34px; height: 34px;
+    border-radius: 4px;
+    border: 1px solid rgba(201,168,76,0.2);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .btn-icon:hover { border-color: var(--gold); color: var(--gold); }
+
+  .btn-icon.del:hover { border-color: #e05050; color: #e05050; }
+
+  /* ── ADD CARD ── */
+  .add-card {
+    background: transparent;
+    border: 1px dashed rgba(201,168,76,0.2);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 280px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .add-card:hover {
+    border-color: rgba(201,168,76,0.5);
+    color: var(--gold);
+    background: rgba(201,168,76,0.03);
+  }
+
+  .add-card-icon { font-size: 1.8rem; opacity: 0.5; }
+
+  /* ── SECTION PANEL ── */
+  .section-panel { display: none; }
+  .section-panel.active { display: block; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 40px 24px;
+    border-top: 1px solid rgba(201,168,76,0.1);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  footer .footer-gold {
+    color: var(--gold);
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    letter-spacing: 4px;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .edit-bar { gap: 8px; }
+    .edit-bar button { padding: 7px 12px; font-size: 0.75rem; }
+    .menu-grid { grid-template-columns: 1fr; }
+    main { padding: 32px 16px 60px; }
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    .edit-bar, .card-actions, .add-card, .nav-wrap { display: none !important; }
+    body { background: white; color: black; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <span class="crown-icon">♛ ✦ ♛</span>
+  <div class="brand-name">Gold Class</div>
+  <div class="brand-sub">تجربة طعام استثنائية</div>
+  <div class="gold-divider"><span></span><i>◆</i><span></span></div>
+  <p style="color:var(--text-muted);font-size:.85rem;letter-spacing:1px;">اختر من أرقى الأطباق العالمية المُعدّة بعناية فائقة</p>
+</header>
+
+<!-- EDIT BAR -->
+<div class="edit-bar">
+  <span class="edit-mode-label">◆ لوحة التحكم</span>
+  <button onclick="openSectionModal()">＋ إضافة قسم</button>
+  <button onclick="openItemModal()">＋ إضافة طبق</button>
+  <button onclick="printMenu()">🖨 طباعة المنيو</button>
+  <button class="danger" onclick="resetAll()">↺ إعادة تعيين</button>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-wrap">
+  <div class="nav-tabs" id="navTabs"></div>
+</div>
+
+<!-- MAIN -->
+<main id="mainContent"></main>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-gold">Gold Class</span>
+  جميع الأطباق مُحضَّرة بمكوّنات طازجة مختارة بعناية · يُرجى إبلاغنا بأي حساسية غذائية
+</footer>
+
+<!-- ADD ITEM MODAL -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal">
+    <h3>إضافة طبق جديد</h3>
+    <label>اسم الطبق</label>
+    <input type="text" id="iName" placeholder="مثال: فيليه ستيك بصلصة الكمأ">
+    <label>الوصف</label>
+    <textarea id="iDesc" placeholder="وصف مختصر للطبق..."></textarea>
+    <label>السعر</label>
+    <input type="text" id="iPrice" placeholder="مثال: ٣٨٠">
+    <label>الرمز التعبيري (Emoji)</label>
+    <input type="text" id="iEmoji" placeholder="مثال: 🥩" maxlength="4">
+    <label>الشارة (اختياري)</label>
+    <input type="text" id="iBadge" placeholder="مثال: SIGNATURE · NEW · CHEF'S PICK">
+    <label>القسم</label>
+    <select id="iSection"></select>
+    <div class="modal-actions">
+      <button class="btn-gold" onclick="saveItem()">حفظ الطبق</button>
+      <button class="btn-cancel" onclick="closeModals()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SECTION MODAL -->
+<div class="modal-overlay" id="sectionModal">
+  <div class="modal">
+    <h3>إضافة قسم جديد</h3>
+    <label>عنوان القسم</label>
+    <input type="text" id="sName" placeholder="مثال: المشويات الفاخرة">
+    <label>الوصف التعريفي</label>
+    <input type="text" id="sDesc" placeholder="جملة تعريفية قصيرة">
+    <label>الكلمة المميزة (Eyebrow)</label>
+    <input type="text" id="sEye" placeholder="مثال: PREMIUM · EXCLUSIVE">
+    <div class="modal-actions">
+      <button class="btn-gold" onclick="saveSection()">إضافة القسم</button>
+      <button class="btn-cancel" onclick="closeModals()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ITEM MODAL -->
+<div class="modal-overlay" id="editItemModal">
+  <div class="modal">
+    <h3>تعديل الطبق</h3>
+    <input type="hidden" id="eIdx">
+    <input type="hidden" id="eSecIdx">
+    <label>اسم الطبق</label>
+    <input type="text" id="eName">
+    <label>الوصف</label>
+    <textarea id="eDesc"></textarea>
+    <label>السعر</label>
+    <input type="text" id="ePrice">
+    <label>الرمز التعبيري</label>
+    <input type="text" id="eEmoji" maxlength="4">
+    <label>الشارة</label>
+    <input type="text" id="eBadge">
+    <div class="modal-actions">
+      <button class="btn-gold" onclick="saveEdit()">حفظ التعديل</button>
+      <button class="btn-cancel" onclick="closeModals()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const defaultData = [
+  {
+    id: 's1',
+    name: 'المقبلات الملكية',
+    eye: 'PREMIUM STARTERS',
+    desc: 'انطلق مع رحلتك الذوقية بأرقى المقبلات المُعدّة يدوياً',
+    items: [
+      { name: 'كافيار بيلوغا مع كريمة الكريفيت', desc: 'كافيار روسي أصيل مع كريمة الجبن الفرنسي وبسكويت البلينيس', price: '٥٨٠', emoji: '🫧', badge: 'SIGNATURE' },
+      { name: 'تارتار السلمون النرويجي', desc: 'سلمون أطلسي طازج مع الأفوكادو وزيت الليمون المعتق', price: '٢٤٠', emoji: '🐟', badge: 'CHEF\'S PICK' },
+      { name: 'فطر الكمأ البيضاء', desc: 'كمأ إيطالية موسمية مع زيت الزيتون البكر وجبن البارميزان', price: '٣٩٠', emoji: '🍄', badge: 'SEASONAL' },
+    ]
+  },
+  {
+    id: 's2',
+    name: 'الأطباق الرئيسية',
+    eye: 'MAIN COURSES',
+    desc: 'روائع الطهي العالمي تُقدَّم على طاولتك',
+    items: [
+      { name: 'ستيك واغيو A5 الياباني', desc: 'لحم واغيو ياباني أصيل درجة A5 مع صلصة الزبدة البنية والهليون الطازج', price: '٨٨٠', emoji: '🥩', badge: 'PREMIUM' },
+      { name: 'جراد البحر المشوي بالثوم', desc: 'جراد بحر استرالي مُتبّل بالزبدة والثوم والأعشاب الطازجة', price: '٦٤٠', emoji: '🦞', badge: 'EXCLUSIVE' },
+      { name: 'صدر الدجاج بالكمأ السوداء', desc: 'دجاجة كورنيش يافعة محشوّة بالكمأ الفرنسية وكريمة الفطر البري', price: '٣٨٠', emoji: '🍗', badge: 'CHEF\'S SPECIAL' },
+      { name: 'ريزوتو الزعفران الإيطالي', desc: 'أرز أربوريو مع زعفران إيراني أصيل وجبن البارميزان المعتق ٣٦ شهراً', price: '٢٨٠', emoji: '🍚', badge: 'VEGETARIAN' },
+    ]
+  },
+  {
+    id: 's3',
+    name: 'المشروبات الراقية',
+    eye: 'FINE BEVERAGES',
+    desc: 'مختارات خاصة من أجود المشروبات الباردة والساخنة',
+    items: [
+      { name: 'شاي المانجو الأزرق المثلج', desc: 'مزيج استوائي فاخر من المانجو الطازجة مع شاي أزرق ماليزي نادر', price: '٩٠', emoji: '🧋', badge: 'SIGNATURE' },
+      { name: 'عصير الرمّان الفاخر', desc: 'رمّان أرجنتيني طازج مع النعناع ولبن الزبادي اليوناني', price: '٧٠', emoji: '🍹', badge: 'FRESH' },
+      { name: 'قهوة كوبا ليبريكا المختصة', desc: 'حبوب نادرة من كوبا، مُحمَّصة حديثاً ومُعدّة بطريقة الكيمكس', price: '١٢٠', emoji: '☕', badge: 'RARE BEANS' },
+    ]
+  },
+  {
+    id: 's4',
+    name: 'الحلويات الفاخرة',
+    eye: 'FINE DESSERTS',
+    desc: 'أختم رحلتك بلمسة حلوة استثنائية',
+    items: [
+      { name: 'كيك الشوكولاتة البلجيكية المذابة', desc: 'كيك داكن بقلب سائل مع آيسكريم الفانيليا الطبيعية وورقة الذهب', price: '١٦٠', emoji: '🎂', badge: 'GOLD LEAF' },
+      { name: 'كريم بروليه الفانيليا التاهيتية', desc: 'كريمة مدخّنة مع سكر مُكرمل طازج وبذور الفانيليا من تاهيتي', price: '١٤٠', emoji: '🍮', badge: 'CLASSIC' },
+      { name: 'مافن العسل والجبن البري', desc: 'جبن ريكوتا إيطالي مع عسل السدر الجبلي وجوز البيكان المحمص', price: '١٢٠', emoji: '🍰', badge: 'NEW' },
+    ]
+  }
+];
+
+let menuData = JSON.parse(localStorage.getItem('goldMenuData') || 'null') || defaultData;
+let activeTab = menuData[0]?.id;
+
+function save() {
+  localStorage.setItem('goldMenuData', JSON.stringify(menuData));
+}
+
+// ── RENDER ──
+function render() {
+  const tabs = document.getElementById('navTabs');
+  const main = document.getElementById('mainContent');
+  tabs.innerHTML = '';
+  main.innerHTML = '';
+
+  menuData.forEach((sec, si) => {
+    // Tab
+    const tab = document.createElement('button');
+    tab.className = 'nav-tab' + (sec.id === activeTab ? ' active' : '');
+    tab.textContent = sec.name;
+    tab.onclick = () => { activeTab = sec.id; render(); };
+    tabs.appendChild(tab);
+
+    // Panel
+    const panel = document.createElement('div');
+    panel.className = 'section-panel' + (sec.id === activeTab ? ' active' : '');
+
+    panel.innerHTML = `
+      <div class="section-header">
+        <div class="section-eyebrow">${sec.eye || ''}</div>
+        <h2 class="section-title">${sec.name}</h2>
+        <p class="section-desc">${sec.desc || ''}</p>
+        <div class="gold-divider" style="max-width:200px;margin-top:20px"><span></span><i>◆</i><span></span></div>
+      </div>
+      <div class="menu-grid" id="grid-${sec.id}"></div>
+    `;
+    main.appendChild(panel);
+
+    const grid = panel.querySelector(`#grid-${sec.id}`);
+
+    sec.items.forEach((item, ii) => {
+      const card = document.createElement('div');
+      card.className = 'menu-card' + (item.badge === 'SIGNATURE' || item.badge === 'PREMIUM' ? ' featured' : '');
+      card.innerHTML = `
+        <div class="card-img-placeholder">${item.emoji || '✦'}</div>
+        <div class="card-body">
+          ${item.badge ? `<span class="card-badge">${item.badge}</span>` : ''}
+          <div class="card-name">${item.name}</div>
+          <div class="card-desc">${item.desc}</div>
+          <div class="card-footer">
+            <div>
+              <div class="card-price">${item.price} <span style="font-size:.7rem;color:var(--text-muted)">ر.س</span></div>
+              <div class="card-price-sub">شامل الضريبة</div>
+            </div>
+            <div class="card-actions">
+              <button class="btn-icon" onclick="event.stopPropagation(); openEditItem(${si},${ii})" title="تعديل">✎</button>
+              <button class="btn-icon del" onclick="event.stopPropagation(); deleteItem(${si},${ii})" title="حذف">✕</button>
+            </div>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    // Add item card
+    const addCard = document.createElement('div');
+    addCard.className = 'add-card';
+    addCard.innerHTML = `<div class="add-card-icon">＋</div><span>إضافة طبق</span>`;
+    addCard.onclick = () => { openItemModal(si); };
+    grid.appendChild(addCard);
+  });
+
+  populateSectionSelect();
+}
+
+// ── ITEM MODAL ──
+function openItemModal(sectionIndex) {
+  document.getElementById('iName').value = '';
+  document.getElementById('iDesc').value = '';
+  document.getElementById('iPrice').value = '';
+  document.getElementById('iEmoji').value = '';
+  document.getElementById('iBadge').value = '';
+  if (typeof sectionIndex !== 'undefined') {
+    document.getElementById('iSection').value = sectionIndex;
+  }
+  document.getElementById('itemModal').classList.add('active');
+}
+
+function populateSectionSelect() {
+  const sel = document.getElementById('iSection');
+  if (!sel) return;
+  sel.innerHTML = '';
+  menuData.forEach((s, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = s.name;
+    sel.appendChild(o);
+  });
+}
+
+function saveItem() {
+  const si = parseInt(document.getElementById('iSection').value);
+  menuData[si].items.push({
+    name: document.getElementById('iName').value || 'طبق جديد',
+    desc: document.getElementById('iDesc').value || '',
+    price: document.getElementById('iPrice').value || '٠',
+    emoji: document.getElementById('iEmoji').value || '✦',
+    badge: document.getElementById('iBadge').value || ''
+  });
+  save(); closeModals(); render();
+}
+
+// ── EDIT ITEM ──
+function openEditItem(si, ii) {
+  const item = menuData[si].items[ii];
+  document.getElementById('eIdx').value = ii;
+  document.getElementById('eSecIdx').value = si;
+  document.getElementById('eName').value = item.name;
+  document.getElementById('eDesc').value = item.desc;
+  document.getElementById('ePrice').value = item.price;
+  document.getElementById('eEmoji').value = item.emoji || '';
+  document.getElementById('eBadge').value = item.badge || '';
+  document.getElementById('editItemModal').classList.add('active');
+}
+
+function saveEdit() {
+  const si = parseInt(document.getElementById('eSecIdx').value);
+  const ii = parseInt(document.getElementById('eIdx').value);
+  menuData[si].items[ii] = {
+    name: document.getElementById('eName').value,
+    desc: document.getElementById('eDesc').value,
+    price: document.getElementById('ePrice').value,
+    emoji: document.getElementById('eEmoji').value,
+    badge: document.getElementById('eBadge').value
+  };
+  save(); closeModals(); render();
+}
+
+function deleteItem(si, ii) {
+  if (!confirm('هل تريد حذف هذا الطبق؟')) return;
+  menuData[si].items.splice(ii, 1);
+  save(); render();
+}
+
+// ── SECTION MODAL ──
+function openSectionModal() {
+  document.getElementById('sName').value = '';
+  document.getElementById('sDesc').value = '';
+  document.getElementById('sEye').value = '';
+  document.getElementById('sectionModal').classList.add('active');
+}
+
+function saveSection() {
+  const name = document.getElementById('sName').value || 'قسم جديد';
+  const newSec = {
+    id: 's' + Date.now(),
+    name,
+    eye: document.getElementById('sEye').value || 'NEW SECTION',
+    desc: document.getElementById('sDesc').value || '',
+    items: []
+  };
+  menuData.push(newSec);
+  activeTab = newSec.id;
+  save(); closeModals(); render();
+}
+
+function closeModals() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+}
+
+function resetAll() {
+  if (!confirm('هل تريد إعادة تعيين المنيو كاملاً للبيانات الافتراضية؟')) return;
+  menuData = JSON.parse(JSON.stringify(defaultData));
+  activeTab = menuData[0].id;
+  save(); render();
+}
+
+function printMenu() { window.print(); }
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModals(); });
+});
+
+// Init
+render();
+</script>
+</body>
+</html>
